@@ -1,47 +1,57 @@
 import sqlite3
 import os
-from config import START_BALANCE, REGISTRATION_BONUS
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB = os.path.join(BASE_DIR, "bingo.db")
-
+DB = "bingo.db"
 
 def connect():
     return sqlite3.connect(DB)
 
 
-def create_tables():
+def init_db():
     conn = connect()
     cur = conn.cursor()
 
-    # Users
     cur.execute("""
     CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id INTEGER PRIMARY KEY,
         telegram_id INTEGER UNIQUE,
         username TEXT,
         balance INTEGER DEFAULT 0
     )
     """)
 
-    # Bingo cards
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS cards (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id INTEGER,
-        card TEXT,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-    """)
+    conn.commit()
+    conn.close()
 
-    # Games
-    cur.execute("""
-    CREATE TABLE IF NOT EXISTS games (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        status TEXT,
-        called_numbers TEXT
+
+def create_user(telegram_id, username=None):
+    conn = connect()
+    cur = conn.cursor()
+
+    cur.execute(
+        """
+        INSERT OR IGNORE INTO users
+        (telegram_id, username, balance)
+        VALUES (?, ?, ?)
+        """,
+        (telegram_id, username, 0)
     )
-    """)
 
     conn.commit()
     conn.close()
+
+
+def get_user(telegram_id):
+    conn = connect()
+    cur = conn.cursor()
+
+    cur.execute(
+        "SELECT * FROM users WHERE telegram_id=?",
+        (telegram_id,)
+    )
+
+    user = cur.fetchone()
+
+    conn.close()
+
+    return user
