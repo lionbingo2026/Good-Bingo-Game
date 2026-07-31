@@ -1,7 +1,9 @@
 import sqlite3
+import os
 from config import START_BALANCE, REGISTRATION_BONUS
 
-DB = "data/bingo.db"
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+DB = os.path.join(BASE_DIR, "bingo.db")
 
 
 def connect():
@@ -43,73 +45,3 @@ def create_tables():
 
     conn.commit()
     conn.close()
-
-
-def create_user(telegram_id, username):
-    conn = connect()
-    cur = conn.cursor()
-
-    cur.execute(
-        "SELECT * FROM users WHERE telegram_id=?",
-        (telegram_id,)
-    )
-
-    user = cur.fetchone()
-
-    if user:
-        conn.close()
-        return False
-
-    cur.execute(
-        """
-        INSERT INTO users
-        (telegram_id, username, balance)
-        VALUES (?, ?, ?)
-        """,
-        (
-            telegram_id,
-            username,
-            START_BALANCE + REGISTRATION_BONUS
-        )
-    )
-
-    conn.commit()
-    conn.close()
-
-    return True
-
-
-def get_user(telegram_id):
-    conn = connect()
-    cur = conn.cursor()
-
-    cur.execute(
-        "SELECT * FROM users WHERE telegram_id=?",
-        (telegram_id,)
-    )
-
-    user = cur.fetchone()
-
-    conn.close()
-    return user
-
-
-def update_balance(telegram_id, amount):
-    conn = connect()
-    cur = conn.cursor()
-
-    cur.execute(
-        """
-        UPDATE users
-        SET balance = balance + ?
-        WHERE telegram_id=?
-        """,
-        (amount, telegram_id)
-    )
-
-    conn.commit()
-    conn.close()
-
-
-# Create database automatically
-create_tables()
