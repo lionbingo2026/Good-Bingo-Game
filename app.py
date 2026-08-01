@@ -20,6 +20,8 @@ asyncio.set_event_loop(loop)
 
 loop.run_until_complete(telegram_app.initialize())
 
+print("WEBHOOK_URL =", WEBHOOK_URL)
+
 loop.run_until_complete(
     telegram_app.bot.set_webhook(WEBHOOK_URL)
 )
