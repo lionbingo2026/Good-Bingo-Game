@@ -1,11 +1,10 @@
 from telegram import Update
 from telegram.ext import (
-    Application,
     CommandHandler,
     ContextTypes
 )
 
-from config import BOT_TOKEN, GAME_NAME
+from config import GAME_NAME
 from database import create_user, get_user
 from cards import generate_card, card_to_text
 
@@ -56,28 +55,16 @@ async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 
-def main():
+def setup_handlers(application):
 
-    app = Application.builder().token(
-        BOT_TOKEN
-    ).build()
-
-    app.add_handler(
+    application.add_handler(
         CommandHandler("start", start)
     )
 
-    app.add_handler(
+    application.add_handler(
         CommandHandler("play", play)
     )
 
-    app.add_handler(
+    application.add_handler(
         CommandHandler("balance", balance)
     )
-
-    print("🤖 Good Bingo Game Bot Running")
-
-    app.run_polling()
-
-
-if __name__ == "__main__":
-    main()
