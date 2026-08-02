@@ -43,15 +43,17 @@ async def play(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 async def balance(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
-    user = get_user(update.effective_user.id)
+    user = update.effective_user
 
-    if user:
+    data = get_user(user.id)
+
+    if data:
         await update.message.reply_text(
-            f"💰 Balance: {user[3]} ETB"
+            f"💰 Your balance: {data['balance']} ETB"
         )
     else:
         await update.message.reply_text(
-            "Please use /start first"
+            "Please use /start first."
         )
 
 
