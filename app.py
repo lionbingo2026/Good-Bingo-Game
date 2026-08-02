@@ -14,6 +14,15 @@ telegram_app = Application.builder().token(BOT_TOKEN).build()
 
 setup_handlers(telegram_app)
 
+initialized = False
+
+
+async def init_telegram():
+    global initialized
+    if not initialized:
+        await telegram_app.initialize()
+        initialized = True
+
 
 @app.route("/")
 def home():
@@ -28,7 +37,11 @@ def webhook():
             telegram_app.bot
         )
 
-        asyncio.run(telegram_app.process_update(update))
+        async def process():
+            await init_telegram()
+            await telegram_app.process_update(update)
+
+        asyncio.run(process())
 
         return "OK", 200
 
