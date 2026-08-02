@@ -5,10 +5,14 @@ import os
 import asyncio
 
 from bot import setup_handlers
+from database import init_db
 
 app = Flask(__name__)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
+
+# Create database tables
+init_db()
 
 telegram_app = Application.builder().token(BOT_TOKEN).build()
 
@@ -46,5 +50,5 @@ def webhook():
         return "OK", 200
 
     except Exception as e:
-        print(f"Webhook error: {e}")
+        print("Webhook error:", e)
         return "OK", 200
