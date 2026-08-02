@@ -1,31 +1,37 @@
+
+
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application
-import os
 import asyncio
+import threading
+import os
 
 from bot import setup_handlers
-from database import init_db
 
 app = Flask(__name__)
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
-# Create database tables
-init_db()
-
 telegram_app = Application.builder().token(BOT_TOKEN).build()
 
 setup_handlers(telegram_app)
 
-initialized = False
+# Persistent asyncio loop
+loop = asyncio.new_event_loop()
+
+def start_loop():
+    asyncio.set_event_loop(loop)
+    loop.run_forever()
+
+threading.Thread(target=start_loop, daemon=True).start()
 
 
-async def init_telegram():
-    global initialized
-    if not initialized:
-        await telegram_app.initialize()
-        initialized = True
+# Initialize Telegram application once
+async def init_bot():
+    await telegram_app.initialize()
+
+asyncio.run_coroutine_threadsafe(init_bot(), loop)
 
 
 @app.route("/")
@@ -36,19 +42,20 @@ def home():
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
+        data = request.get_json(force=True)
+
         update = Update.de_json(
-            request.get_json(force=True),
+            data,
             telegram_app.bot
         )
 
-        async def process():
-            await init_telegram()
-            await telegram_app.process_update(update)
-
-        asyncio.run(process())
+        asyncio.run_coroutine_threadsafe(
+            telegram_app.process_update(update),
+            loop
+        )
 
         return "OK", 200
 
     except Exception as e:
         print("Webhook error:", e)
-        return "OK", 200
+        return "ERROR", 500
