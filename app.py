@@ -22,19 +22,16 @@ def home():
 
 @app.route("/webhook", methods=["POST"])
 def webhook():
+    try:
+        update = Update.de_json(
+            request.get_json(force=True),
+            telegram_app.bot
+        )
 
-    update = Update.de_json(
-        request.get_json(force=True),
-        telegram_app.bot
-    )
+        asyncio.run(telegram_app.process_update(update))
 
-    asyncio.run(
-        telegram_app.process_update(update)
-    )
+        return "OK", 200
 
-    return "OK"
-
-
-@app.route("/health")
-def health():
-    return "OK"
+    except Exception as e:
+        print(f"Webhook error: {e}")
+        return "OK", 200
