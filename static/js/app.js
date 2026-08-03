@@ -1,35 +1,33 @@
-console.log("Good Bingo Game loaded");
+// Good Bingo Game Telegram Mini App
+
+const tg = window.Telegram.WebApp;
+
+// Tell Telegram the app is ready
+tg.ready();
+
+// Expand Mini App to full screen
+tg.expand();
 
 
-async function updateBoard() {
+// Get Telegram user information
+const user = tg.initDataUnsafe?.user;
 
-    try {
-
-        const response = await fetch("/api/game");
-
-        const data = await response.json();
-
-
-        if (data.called_numbers) {
-
-            document.getElementById("called").innerHTML =
-                "🎱 Called: " + data.called_numbers.join(", ");
-
-        }
-
-
-    } catch (error) {
-
-        console.log("Waiting for game data...");
-
-    }
-
+if (user) {
+    document.getElementById("welcome").innerHTML =
+        `Welcome, ${user.first_name}! 🎲`;
 }
 
 
-// Refresh board every 5 seconds
-setInterval(updateBoard, 5000);
+// Join game button
+function startGame() {
+    tg.showAlert("🎱 Joining Good Bingo Game...");
+
+    // Later connect this to your Flask game API
+    // fetch("/api/join")
+}
 
 
-// Load once
-updateBoard();
+// Refresh game data
+function refreshGame() {
+    location.reload();
+}
