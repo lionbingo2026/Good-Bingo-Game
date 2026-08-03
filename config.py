@@ -1,8 +1,11 @@
 import os
 
 # Telegram Bot
-BOT_TOKEN = os.getenv("BOT_TOKEN", "YOUR_BOT_TOKEN")
+BOT_TOKEN = os.getenv("BOT_TOKEN")
 ADMIN_ID = int(os.getenv("ADMIN_ID", "8612978218"))
+
+if not BOT_TOKEN:
+    raise ValueError("BOT_TOKEN environment variable is missing")
 
 # Game Settings
 GAME_NAME = "Good Bingo Game"
@@ -14,6 +17,7 @@ MAX_CARDS_PER_USER = 3
 BINGO_TYPE = "75 BALL"
 FREE_CENTER = True
 DRAW_INTERVAL = 5
+AUTO_DRAW = True
 
 # Wallet Settings
 START_BALANCE = 0
@@ -26,7 +30,10 @@ MIN_WITHDRAW = 100
 
 # Server
 HOST = "0.0.0.0"
-PORT = int(os.getenv("PORT", 5000))
+PORT = int(os.getenv("PORT", "10000"))
 
 # Webhook
-WEBHOOK_URL = os.getenv("WEBHOOK_URL", "")
+WEBHOOK_URL = os.getenv("WEBHOOK_URL")
+
+# Database
+DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///bingo.db")
