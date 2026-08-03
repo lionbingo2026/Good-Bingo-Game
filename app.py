@@ -1,10 +1,7 @@
-
-
 from flask import Flask, request
 from telegram import Update
 from telegram.ext import Application
 import asyncio
-import threading
 import os
 
 from bot import setup_handlers
@@ -17,21 +14,15 @@ telegram_app = Application.builder().token(BOT_TOKEN).build()
 
 setup_handlers(telegram_app)
 
-# Persistent asyncio loop
 loop = asyncio.new_event_loop()
 
-def start_loop():
-    asyncio.set_event_loop(loop)
-    loop.run_forever()
 
-threading.Thread(target=start_loop, daemon=True).start()
-
-
-# Initialize Telegram application once
 async def init_bot():
     await telegram_app.initialize()
+    await telegram_app.start()
 
-asyncio.run_coroutine_threadsafe(init_bot(), loop)
+
+loop.run_until_complete(init_bot())
 
 
 @app.route("/")
@@ -59,3 +50,8 @@ def webhook():
     except Exception as e:
         print("Webhook error:", e)
         return "ERROR", 500
+
+
+if __name__ == "__main__":
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
