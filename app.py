@@ -12,10 +12,8 @@ from game import BingoGame
 
 app = Flask(__name__)
 
-
 # Database
 init_db()
-
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -27,12 +25,13 @@ if not BOT_TOKEN:
 game = BingoGame()
 
 
-# Telegram bot
+# Telegram application
 telegram_app = Application.builder().token(BOT_TOKEN).build()
 
 setup_handlers(telegram_app)
 
 
+# Async loop
 loop = asyncio.new_event_loop()
 
 
@@ -47,11 +46,9 @@ threading.Thread(
 ).start()
 
 
-
 async def init_bot():
     await telegram_app.initialize()
     await telegram_app.start()
-
 
 
 asyncio.run_coroutine_threadsafe(
@@ -60,11 +57,9 @@ asyncio.run_coroutine_threadsafe(
 )
 
 
-
 @app.route("/")
 def home():
     return "🎲 Good Bingo Game is running"
-
 
 
 @app.route("/api/game")
@@ -72,10 +67,8 @@ def game_status():
     return jsonify(game.get_status())
 
 
-
 @app.route("/webhook", methods=["POST"])
 def webhook():
-
     try:
         data = request.get_json(force=True)
 
@@ -84,22 +77,22 @@ def webhook():
             telegram_app.bot
         )
 
-        asyncio.run_coroutine_threadsafe(
+        future = asyncio.run_coroutine_threadsafe(
             telegram_app.process_update(update),
             loop
         )
 
+        # Show handler errors
+        future.result(timeout=10)
+
         return "OK", 200
 
-
     except Exception as e:
-        print("Webhook error:", e)
+        print("Webhook error:", repr(e))
         return "ERROR", 500
 
 
-
 if __name__ == "__main__":
-
     port = int(os.environ.get("PORT", 10000))
 
     app.run(
