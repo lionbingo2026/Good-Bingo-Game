@@ -77,13 +77,11 @@ def webhook():
             telegram_app.bot
         )
 
-        future = asyncio.run_coroutine_threadsafe(
+        # Process update without blocking Telegram webhook
+        asyncio.run_coroutine_threadsafe(
             telegram_app.process_update(update),
             loop
         )
-
-        # Show handler errors
-        future.result(timeout=10)
 
         return "OK", 200
 
