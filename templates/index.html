@@ -1,1 +1,27 @@
-<link rel="icon" type="image/png" href="/static/favicon.png">
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Good Bingo Game</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+</head>
+
+<body>
+
+<h1>🎲 Good Bingo Game</h1>
+
+<p id="status">Waiting for game...</p>
+
+<button onclick="joinGame()">Join Bingo</button>
+
+<h2>Called Numbers</h2>
+<div id="numbers"></div>
+
+<script>
+function joinGame() {
+    document.getElementById("status").innerHTML =
+        "Joined Bingo!";
+}
+</script>
+
+</body>
+</html>
