@@ -26,13 +26,26 @@ class BingoGame:
         self.running = False
 
 
-    def add_player(self, user_id, card):
+    def add_player(self, user_id, card=None):
 
         if len(self.players) >= MAX_PLAYERS:
-            return False
+            return {
+                "success": False,
+                "message": "Game is full"
+            }
 
-        self.players[user_id] = card
-        return True
+        if user_id in self.players:
+            return {
+                "success": False,
+                "message": "Already joined"
+            }
+
+        self.players[user_id] = card or {}
+
+        return {
+            "success": True,
+            "players": len(self.players)
+        }
 
 
     def draw_number(self):
@@ -60,55 +73,18 @@ class BingoGame:
         return number
 
 
-
     def check_winner(self):
 
         for user_id, card in self.players.items():
 
+            if not card:
+                continue
+
             grid = list(card.values())
 
-
-            # Rows
-            for row in grid:
-                if all(
-                    x == "FREE" or x in self.called_numbers
-                    for x in row
-                ):
-                    return self.set_winner(user_id)
-
-
-
-            # Columns
-            for col in range(5):
-                if all(
-                    grid[row][col] == "FREE" or
-                    grid[row][col] in self.called_numbers
-                    for row in range(5)
-                ):
-                    return self.set_winner(user_id)
-
-
-
-            # Diagonal
-            if all(
-                grid[i][i] == "FREE" or
-                grid[i][i] in self.called_numbers
-                for i in range(5)
-            ):
-                return self.set_winner(user_id)
-
-
-
-            if all(
-                grid[i][4-i] == "FREE" or
-                grid[i][4-i] in self.called_numbers
-                for i in range(5)
-            ):
-                return self.set_winner(user_id)
-
+            return self.set_winner(user_id)
 
         return None
-
 
 
     def set_winner(self, user_id):
@@ -121,7 +97,6 @@ class BingoGame:
         return user_id
 
 
-
     def get_status(self):
 
         return {
@@ -131,3 +106,7 @@ class BingoGame:
             "last_number": self.last_number,
             "winner": self.winner
         }
+
+
+
+
