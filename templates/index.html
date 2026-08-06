@@ -3,6 +3,8 @@
 <head>
     <title>Good Bingo Game</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
 </head>
 
 <body>
@@ -17,6 +19,9 @@
 <div id="numbers"></div>
 
 <script>
+const tg = window.Telegram.WebApp;
+tg.ready();
+
 function joinGame() {
     document.getElementById("status").innerHTML =
         "Joined Bingo!";
