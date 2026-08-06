@@ -1,32 +1,38 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Good Bingo Game</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-
-<body>
-
-<h1>🎲 Good Bingo Game</h1>
-
-<p id="status">Waiting for game...</p>
-
-<button onclick="joinGame()">Join Bingo</button>
-
-<h2>Called Numbers</h2>
-<div id="numbers"></div>
-
 <script>
 const tg = window.Telegram.WebApp;
 tg.ready();
 
 function joinGame() {
-    document.getElementById("status").innerHTML =
-        "Joined Bingo!";
+
+    let user_id = "test_user";
+
+    if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+        user_id = tg.initDataUnsafe.user.id;
+    }
+
+    fetch("/api/join", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+            user_id: user_id
+        })
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        document.getElementById("status").innerHTML =
+            data.message;
+
+    })
+    .catch(error => {
+
+        document.getElementById("status").innerHTML =
+            "Join error";
+
+        console.log(error);
+
+    });
 }
 </script>
-
-</body>
-</html>
