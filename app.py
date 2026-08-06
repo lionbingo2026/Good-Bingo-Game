@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 from telegram import Update
 from telegram.ext import Application
 import asyncio
@@ -12,8 +12,10 @@ from game import BingoGame
 
 app = Flask(__name__)
 
+
 # Database
 init_db()
+
 
 BOT_TOKEN = os.getenv("BOT_TOKEN")
 
@@ -57,16 +59,41 @@ asyncio.run_coroutine_threadsafe(
 )
 
 
+# Mini App page
 @app.route("/")
 def home():
-    return "🎲 Good Bingo Game is running"
+    return render_template("index.html")
 
 
+# Game status API
 @app.route("/api/game")
 def game_status():
     return jsonify(game.get_status())
 
 
+# Join Bingo API
+@app.route("/api/join", methods=["POST"])
+def join_bingo():
+    data = request.get_json()
+
+    user_id = data.get("user_id")
+
+    if not user_id:
+        return jsonify({
+            "success": False,
+            "message": "User ID missing"
+        }), 400
+
+    result = game.add_player(user_id)
+
+    return jsonify({
+        "success": True,
+        "message": "Joined Bingo!",
+        "data": result
+    })
+
+
+# Telegram webhook
 @app.route("/webhook", methods=["POST"])
 def webhook():
     try:
@@ -77,7 +104,6 @@ def webhook():
             telegram_app.bot
         )
 
-        # Process update without blocking Telegram webhook
         asyncio.run_coroutine_threadsafe(
             telegram_app.process_update(update),
             loop
@@ -97,3 +123,6 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=port
     )
+
+
+
