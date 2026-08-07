@@ -17,22 +17,34 @@ def generate_card():
     return card
 
 
+
 def card_to_text(card):
 
     text = "🎲 GOOD BINGO GAME\n\n"
     text += " B     I     N     G     O\n"
     text += "--------------------------\n"
 
+
     for row in range(5):
+
         line = ""
 
         for column in ["B", "I", "N", "G", "O"]:
+
             line += f"{str(card[column][row]):^7}"
 
+
         text += line + "\n"
+
 
     return text
 
 
+
 if __name__ == "__main__":
-    print(card_to_text(generate_card()))
+
+    print(
+        card_to_text(
+            generate_card()
+        )
+    )
