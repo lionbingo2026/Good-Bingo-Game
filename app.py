@@ -1,13 +1,10 @@
-
-
-
-
-
 from flask import Flask, request, jsonify, render_template
 from telegram import Update
 from telegram.ext import Application
 import asyncio
 import os
+import threading
+import time
 
 from bot import setup_handlers
 from database import init_db
@@ -57,7 +54,6 @@ setup_handlers(telegram_app)
 # ============================================================
 
 telegram_loop = asyncio.new_event_loop()
-
 asyncio.set_event_loop(telegram_loop)
 
 
@@ -86,7 +82,7 @@ def ensure_telegram_initialized():
         )
 
 
-# Initialize when the Gunicorn worker loads.
+# Initialize when Gunicorn worker loads.
 ensure_telegram_initialized()
 
 
@@ -95,6 +91,64 @@ ensure_telegram_initialized()
 # ============================================================
 
 game = BingoGame()
+
+
+# ============================================================
+# BINGO SETTINGS
+# ============================================================
+
+MIN_PLAYERS_TO_START = 2
+DRAW_INTERVAL = 5
+
+
+# ============================================================
+# AUTOMATIC BINGO CALLER
+# ============================================================
+
+def bingo_caller():
+
+    print("🎱 Bingo caller started.")
+
+    while True:
+
+        try:
+
+            if game.running:
+
+                number = game.draw_number()
+
+                if number is not None:
+
+                    print(
+                        f"🎱 Live Bingo Number: {number}"
+                    )
+
+                    winner = game.check_winner()
+
+                    if winner is not None:
+
+                        print(
+                            f"🏆 Winner: {winner}"
+                        )
+
+            time.sleep(DRAW_INTERVAL)
+
+        except Exception as e:
+
+            print(
+                "Bingo caller error:",
+                repr(e)
+            )
+
+            time.sleep(DRAW_INTERVAL)
+
+
+bingo_thread = threading.Thread(
+    target=bingo_caller,
+    daemon=True
+)
+
+bingo_thread.start()
 
 
 # ============================================================
@@ -117,8 +171,12 @@ def home():
 def health():
 
     return jsonify({
+
         "ok": True,
-        "status": "Good Bingo Game running"
+
+        "status":
+            "Good Bingo Game running"
+
     })
 
 
@@ -154,28 +212,43 @@ def join():
     if not user_id:
 
         return jsonify({
+
             "success": False,
-            "message": "Telegram user ID missing"
+
+            "message":
+                "Telegram user ID missing"
+
         }), 400
+
 
     try:
 
-        if hasattr(
-            game,
-            "add_player"
+        result = game.add_player(
+            user_id
+        )
+
+        if not result.get("success"):
+
+            return jsonify(result), 400
+
+
+        # ----------------------------------------------------
+        # Start game automatically when enough players join
+        # ----------------------------------------------------
+
+        if (
+            len(game.players)
+            >= MIN_PLAYERS_TO_START
+            and not game.running
         ):
 
-            try:
+            game.start_game()
 
-                game.add_player(
-                    user_id
-                )
+            print(
+                f"🎮 Game started with "
+                f"{len(game.players)} players."
+            )
 
-            except TypeError:
-
-                game.add_player(
-                    str(user_id)
-                )
 
         return jsonify({
 
@@ -188,8 +261,19 @@ def join():
 
             "user_id": user_id,
 
-            "username": username
+            "username": username,
+
+            "players":
+                len(game.players),
+
+            "card":
+                result.get("card"),
+
+            "running":
+                game.running
+
         })
+
 
     except Exception as e:
 
@@ -218,103 +302,73 @@ def join():
 )
 def game_status():
 
-    players = 0
-    cards = 0
-    prize_pool = 0
-    current_number = None
-    called_numbers = []
-    status = "Waiting for game..."
-
     try:
 
-        # ----------------------------------------------------
-        # Players
-        # ----------------------------------------------------
+        status = game.get_status()
 
-        if hasattr(
-            game,
-            "players"
-        ):
+        players = status.get(
+            "players",
+            0
+        )
 
-            if isinstance(
-                game.players,
-                dict
-            ):
+        cards = status.get(
+            "cards",
+            0
+        )
 
-                players = len(
-                    game.players
-                )
+        called_numbers = status.get(
+            "called_numbers",
+            []
+        )
 
-            elif isinstance(
-                game.players,
-                list
-            ):
+        current_number = status.get(
+            "last_number"
+        )
 
-                players = len(
-                    game.players
-                )
+        running = status.get(
+            "running",
+            False
+        )
 
-
-        # ----------------------------------------------------
-        # Cards
-        # ----------------------------------------------------
-
-        if hasattr(
-            game,
-            "cards"
-        ):
-
-            if isinstance(
-                game.cards,
-                dict
-            ):
-
-                cards = len(
-                    game.cards
-                )
-
-            elif isinstance(
-                game.cards,
-                list
-            ):
-
-                cards = len(
-                    game.cards
-                )
+        winner = status.get(
+            "winner"
+        )
 
 
         # ----------------------------------------------------
-        # Called numbers
+        # Status text
         # ----------------------------------------------------
 
-        if hasattr(
-            game,
-            "called_numbers"
-        ):
+        if winner is not None:
 
-            called_numbers = list(
-                game.called_numbers
+            game_status_text = (
+                f"🏆 Winner: {winner}"
             )
 
+        elif running:
 
-        # ----------------------------------------------------
-        # Current number
-        # ----------------------------------------------------
-
-        if called_numbers:
-
-            current_number = (
-                called_numbers[-1]
+            game_status_text = (
+                "🔴 LIVE - Number drawing"
             )
 
+        elif players == 0:
 
-        # ----------------------------------------------------
-        # Game status
-        # ----------------------------------------------------
+            game_status_text = (
+                "Waiting for players..."
+            )
 
-        if players > 0:
+        elif players < MIN_PLAYERS_TO_START:
 
-            status = "Game ready"
+            game_status_text = (
+                f"Waiting for players "
+                f"({players}/{MIN_PLAYERS_TO_START})"
+            )
+
+        else:
+
+            game_status_text = (
+                "Game finished"
+            )
 
 
         return jsonify({
@@ -325,7 +379,7 @@ def game_status():
 
             "cards": cards,
 
-            "prize_pool": prize_pool,
+            "prize_pool": 0,
 
             "current_number":
                 current_number,
@@ -334,7 +388,14 @@ def game_status():
                 called_numbers,
 
             "status":
-                status
+                game_status_text,
+
+            "running":
+                running,
+
+            "winner":
+                winner
+
         })
 
 
@@ -349,21 +410,24 @@ def game_status():
 
             "success": False,
 
-            "players": players,
+            "players": 0,
 
-            "cards": cards,
+            "cards": 0,
 
-            "prize_pool": prize_pool,
+            "prize_pool": 0,
 
-            "current_number":
-                current_number,
+            "current_number": None,
 
-            "called_numbers":
-                called_numbers,
+            "called_numbers": [],
 
             "status":
-                status
-        })
+                "Game status unavailable",
+
+            "running": False,
+
+            "winner": None
+
+        }), 500
 
 
 # ============================================================
@@ -385,13 +449,6 @@ def bingo():
         or data.get("user_id")
     )
 
-    card = data.get("card")
-
-
-    # --------------------------------------------------------
-    # User ID required
-    # --------------------------------------------------------
-
     if not user_id:
 
         return jsonify({
@@ -404,47 +461,13 @@ def bingo():
         }), 400
 
 
-    # --------------------------------------------------------
-    # Card required
-    # --------------------------------------------------------
-
-    if not card:
-
-        return jsonify({
-
-            "success": False,
-
-            "message":
-                "Bingo card missing"
-
-        }), 400
-
-
     try:
 
-        if hasattr(
-            game,
-            "check_bingo"
-        ):
+        # ----------------------------------------------------
+        # Use the server-side card
+        # ----------------------------------------------------
 
-            result = game.check_bingo(
-                user_id,
-                card
-            )
-
-
-            if result:
-
-                return jsonify({
-
-                    "success": True,
-
-                    "bingo": True,
-
-                    "message":
-                        "BINGO! Your claim was accepted!"
-                })
-
+        if user_id not in game.players:
 
             return jsonify({
 
@@ -453,7 +476,34 @@ def bingo():
                 "bingo": False,
 
                 "message":
-                    "Bingo not confirmed yet."
+                    "You have not joined this game."
+
+            }), 400
+
+
+        card = game.players[user_id]
+
+
+        if game.check_bingo(
+            user_id,
+            card
+        ):
+
+            winner = game.set_winner(
+                user_id
+            )
+
+            return jsonify({
+
+                "success": True,
+
+                "bingo": True,
+
+                "winner": winner,
+
+                "message":
+                    "🏆 BINGO! You are the winner!"
+
             })
 
 
@@ -464,7 +514,8 @@ def bingo():
             "bingo": False,
 
             "message":
-                "Bingo checking is not configured yet."
+                "Bingo not confirmed yet."
+
         })
 
 
@@ -499,17 +550,8 @@ def webhook():
 
     try:
 
-        # ----------------------------------------------------
-        # Make absolutely sure this worker has an initialized
-        # Telegram Application before processing the update.
-        # ----------------------------------------------------
-
         ensure_telegram_initialized()
 
-
-        # ----------------------------------------------------
-        # Read Telegram JSON
-        # ----------------------------------------------------
 
         data = request.get_json(
             force=True
@@ -522,10 +564,6 @@ def webhook():
                 400
             )
 
-
-        # ----------------------------------------------------
-        # Convert JSON into Telegram Update
-        # ----------------------------------------------------
 
         update = Update.de_json(
             data,
@@ -540,10 +578,6 @@ def webhook():
                 400
             )
 
-
-        # ----------------------------------------------------
-        # Process Telegram update
-        # ----------------------------------------------------
 
         telegram_loop.run_until_complete(
             telegram_app.process_update(
