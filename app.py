@@ -71,7 +71,7 @@ def ensure_telegram_initialized():
     before processing webhook updates.
     """
 
-    if not telegram_app.initialized:
+    if not getattr(telegram_app, "_initialized", False):
 
         print(
             "Initializing Telegram Application..."
