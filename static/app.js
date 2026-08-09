@@ -65,12 +65,7 @@ if (tg?.initDataUnsafe?.user) {
 return tg.initDataUnsafe.user;
 }
 
-return {
-    id: null,
-    first_name: "Guest",
-    username: ""
-};
-
+return null;
 }
 
 async function joinGame() {
@@ -79,6 +74,20 @@ const button = document.getElementById("joinButton");
 if (button) button.disabled = true;
 
 const user = getTelegramUser();
+
+if (!user || !user.id) {
+    showMessage(
+        "Please open Good Bingo Game from the Telegram bot."
+    );
+
+    setStatus(
+        "Telegram user information not available."
+    );
+
+    if (button) button.disabled = false;
+
+    return;
+}
 
 try {
     const data = await apiRequest("/api/join", {
