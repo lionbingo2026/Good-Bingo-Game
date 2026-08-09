@@ -1,214 +1,422 @@
 * {
-  box-sizing: border-box;
-  }
+    box-sizing: border-box;
+}
+
+html {
+    -webkit-text-size-adjust: 100%;
+}
 
 body {
-margin: 0;
-font-family: Arial, sans-serif;
-background: #f4f7fb;
-color: #172033;
-}
-
-.app {
-max-width: 520px;
-margin: 0 auto;
-min-height: 100vh;
-padding: 16px;
-}
-
-.header {
-text-align: center;
-padding: 18px 10px;
-}
-
-.logo {
-font-size: 42px;
-}
-
-.header h1 {
-margin: 6px 0;
-font-size: 28px;
-}
-
-.header p {
-margin: 4px 0;
-color: #697386;
-}
-
-.card {
-background: white;
-border-radius: 18px;
-padding: 18px;
-margin-bottom: 16px;
-box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
-}
-
-.stats {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 8px;
-}
-
-.stat {
-text-align: center;
-padding: 12px 5px;
-background: #f1f4f8;
-border-radius: 12px;
-}
-
-.stat strong {
-display: block;
-font-size: 20px;
-}
-
-.stat span {
-display: block;
-font-size: 12px;
-color: #687385;
-margin-top: 3px;
-}
-
-.status {
-text-align: center;
-font-weight: bold;
-margin-bottom: 14px;
-}
-
-.current-number {
-width: 120px;
-height: 120px;
-margin: 10px auto 18px;
-border-radius: 50%;
-display: flex;
-justify-content: center;
-align-items: center;
-background: #172033;
-color: white;
-font-size: 48px;
-font-weight: bold;
-}
-
-.board-title {
-text-align: center;
-margin-bottom: 12px;
-}
-
-.bingo-board {
-display: grid;
-grid-template-columns: repeat(5, 1fr);
-gap: 6px;
-}
-
-.cell {
-aspect-ratio: 1;
-border: none;
-border-radius: 10px;
-background: #edf1f6;
-font-size: 18px;
-font-weight: bold;
-cursor: pointer;
-color: #172033;
-}
-
-.cell.called {
-background: #172033;
-color: white;
-}
-
-.cell.free {
-background: #dce5f2;
-color: #172033;
-}
-
-.cell.selected {
-outline: 3px solid #172033;
-}
-
-.controls {
-display: grid;
-gap: 10px;
+    margin: 0;
+    font-family: Arial, sans-serif;
+    background: #f4f7fb;
+    color: #172033;
 }
 
 button {
-border: none;
-border-radius: 12px;
-padding: 14px;
-font-size: 16px;
-font-weight: bold;
-cursor: pointer;
+    font-family: inherit;
 }
 
-.primary {
-background: #172033;
-color: white;
+.app {
+    max-width: 520px;
+    margin: 0 auto;
+    min-height: 100vh;
+    padding: 16px;
 }
 
-.secondary {
-background: #e9edf3;
-color: #172033;
+
+/* =========================
+   HEADER
+   ========================= */
+
+.header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 4px 18px;
 }
 
-.danger {
-background: #d94b4b;
-color: white;
+.header > div:first-child {
+    flex: 1;
 }
 
-button:disabled {
-opacity: 0.5;
-cursor: not-allowed;
+.header h1 {
+    margin: 0;
+    font-size: 26px;
+    line-height: 1.2;
 }
 
-.called-list {
-display: flex;
-flex-wrap: wrap;
-gap: 7px;
+.header p {
+    margin: 5px 0 0;
+    color: #697386;
+    font-size: 13px;
 }
 
-.called-ball {
-width: 38px;
-height: 38px;
-border-radius: 50%;
-display: flex;
-align-items: center;
-justify-content: center;
-background: #172033;
-color: white;
-font-weight: bold;
+.logo {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #172033;
+    font-size: 27px;
 }
+
+.connection {
+    font-size: 11px;
+    font-weight: bold;
+    color: #16a34a;
+    white-space: nowrap;
+}
+
+
+/* =========================
+   MESSAGE
+   ========================= */
 
 .message {
-text-align: center;
-padding: 12px;
-border-radius: 10px;
-background: #eef3f8;
-margin-bottom: 12px;
-display: none;
+    display: none;
+    text-align: center;
+    padding: 12px;
+    margin-bottom: 12px;
+    border-radius: 12px;
+    background: #eef3f8;
+    color: #172033;
+    font-size: 14px;
+    font-weight: bold;
 }
 
 .message.show {
-display: block;
+    display: block;
 }
 
-.footer {
-text-align: center;
-color: #7b8494;
-font-size: 12px;
-padding: 10px;
+
+/* =========================
+   CARDS
+   ========================= */
+
+.card {
+    background: white;
+    border-radius: 18px;
+    padding: 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
 }
 
-@media (max-width: 380px) {
-.app {
-padding: 10px;
+.game-card {
+    text-align: center;
+}
+
+
+/* =========================
+   STATISTICS
+   ========================= */
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.stat {
+    text-align: center;
+    padding: 12px 5px;
+    background: #f1f4f8;
+    border-radius: 12px;
+}
+
+.stat strong {
+    display: block;
+    font-size: 20px;
+    line-height: 1.2;
+}
+
+.stat span {
+    display: block;
+    font-size: 12px;
+    color: #687385;
+    margin-top: 4px;
+}
+
+
+/* =========================
+   GAME STATUS
+   ========================= */
+
+.status {
+    text-align: center;
+    font-weight: bold;
+    margin-bottom: 8px;
+    color: #16a34a;
+    font-size: 14px;
+}
+
+.number-title {
+    color: #687385;
+    font-size: 11px;
+    font-weight: bold;
+    letter-spacing: 1px;
+    margin-top: 4px;
+}
+
+
+/* =========================
+   CURRENT NUMBER
+   ========================= */
+
+.current-number {
+    width: 125px;
+    height: 125px;
+    margin: 10px auto 20px;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background: #172033;
+    color: white;
+    font-size: 48px;
+    font-weight: bold;
+    box-shadow: 0 8px 20px rgba(23, 32, 51, 0.20);
+}
+
+
+/* =========================
+   BINGO CARD
+   ========================= */
+
+.board-title {
+    text-align: center;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.bingo-letters {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.bingo-letters span {
+    font-size: 15px;
+    font-weight: bold;
+    color: #172033;
+    padding: 5px;
+}
+
+
+/* 5 x 5 board */
+
+.bingo-board {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
 }
 
 .cell {
-    font-size: 15px;
+    aspect-ratio: 1;
+    min-width: 0;
+    border: none;
+    border-radius: 10px;
+    background: #edf1f6;
+    color: #172033;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 17px;
+    font-weight: bold;
+    user-select: none;
 }
 
-.current-number {
-    width: 100px;
-    height: 100px;
-    font-size: 40px;
+.cell.called {
+    background: #172033;
+    color: white;
 }
 
+.cell.free {
+    background: #dce5f2;
+    color: #172033;
+    font-size: 11px;
+}
+
+.cell.selected {
+    outline: 3px solid #172033;
+}
+
+.cell.winner {
+    outline: 3px solid #16a34a;
+}
+
+
+/* =========================
+   CONTROLS
+   ========================= */
+
+.controls {
+    display: grid;
+    gap: 10px;
+}
+
+button {
+    width: 100%;
+    border: none;
+    border-radius: 12px;
+    padding: 14px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.1s ease,
+                opacity 0.1s ease;
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.primary {
+    background: #172033;
+    color: white;
+}
+
+.bingo-button {
+    background: #16a34a;
+    color: white;
+}
+
+.secondary {
+    background: #e9edf3;
+    color: #172033;
+}
+
+.danger {
+    background: #d94b4b;
+    color: white;
+}
+
+
+/* =========================
+   CALLED NUMBERS
+   ========================= */
+
+.card h3 {
+    margin: 0 0 12px;
+    font-size: 16px;
+}
+
+.called-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 7px;
+    max-height: 180px;
+    overflow-y: auto;
+}
+
+.called-ball {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #172033;
+    color: white;
+    font-weight: bold;
+    font-size: 13px;
+}
+
+
+/* =========================
+   GAME INFORMATION
+   ========================= */
+
+.game-info {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.game-info div {
+    background: #f1f4f8;
+    border-radius: 12px;
+    padding: 12px;
+    text-align: center;
+}
+
+.game-info span {
+    display: block;
+    color: #687385;
+    font-size: 11px;
+    margin-bottom: 5px;
+}
+
+.game-info strong {
+    display: block;
+    font-size: 14px;
+}
+
+
+/* =========================
+   FOOTER
+   ========================= */
+
+.footer {
+    text-align: center;
+    color: #7b8494;
+    font-size: 12px;
+    padding: 10px 5px 20px;
+}
+
+.footer span {
+    font-size: 11px;
+}
+
+
+/* =========================
+   MOBILE
+   ========================= */
+
+@media (max-width: 380px) {
+
+    .app {
+        padding: 10px;
+    }
+
+    .header h1 {
+        font-size: 22px;
+    }
+
+    .logo {
+        width: 43px;
+        height: 43px;
+        font-size: 24px;
+    }
+
+    .current-number {
+        width: 105px;
+        height: 105px;
+        font-size: 40px;
+    }
+
+    .cell {
+        font-size: 15px;
+    }
+
+    .cell.free {
+        font-size: 9px;
+    }
+
+    .stat strong {
+        font-size: 18px;
+    }
+
+    .called-ball {
+        width: 34px;
+        height: 34px;
+    }
 }

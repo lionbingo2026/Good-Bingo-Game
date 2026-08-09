@@ -1,141 +1,213 @@
-<!DOCTYPE html><html lang="en"><head>
-    <meta charset="UTF-8"><meta
-    name="viewport"
-    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
->
+<!DOCTYPE html>
+<html lang="en">
 
-<title>Good Bingo Game</title>
+<head>
+    <meta charset="UTF-8">
 
-<!-- Telegram Mini App -->
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-<!-- Good Bingo Game CSS -->
-<link rel="stylesheet" href="/static/style.css">
-
-</head><body><div class="app"><!-- Header -->
-<header class="header">
-    <div class="logo">🎲</div>
-
-    <h1>Good Bingo Game</h1>
-
-    <p>Live 75-Ball Bingo</p>
-</header>
-
-
-<!-- Message -->
-<div id="message" class="message"></div>
-
-
-<!-- Game statistics -->
-<section class="card">
-
-    <div class="stats">
-
-        <div class="stat">
-            <strong id="players">0</strong>
-            <span>Players</span>
-        </div>
-
-        <div class="stat">
-            <strong id="cards">0</strong>
-            <span>Cards</span>
-        </div>
-
-        <div class="stat">
-            <strong id="pot">0 ETB</strong>
-            <span>Prize Pool</span>
-        </div>
-
-    </div>
-
-</section>
-
-
-<!-- Game -->
-<section class="card">
-
-    <div id="gameStatus" class="status">
-        Waiting for game...
-    </div>
-
-
-    <!-- Current number -->
-    <div
-        id="currentNumber"
-        class="current-number"
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     >
-        —
-    </div>
+
+    <title>Good Bingo Game</title>
+
+    <!-- Telegram Mini App -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <!-- Good Bingo Game CSS -->
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+
+<body>
+
+<div class="app">
+
+    <!-- Header -->
+    <header class="header">
+
+        <div class="logo">🎱</div>
+
+        <div class="header-text">
+            <h1>Good Bingo Game</h1>
+            <p>Live 75-Ball Bingo</p>
+        </div>
+
+        <div id="connection" class="connection">
+            ● Live
+        </div>
+
+    </header>
 
 
-    <!-- Bingo card -->
-    <div class="board-title">
-        <strong>YOUR BINGO CARD</strong>
-    </div>
-
+    <!-- Message -->
     <div
-        id="bingoBoard"
-        class="bingo-board"
+        id="message"
+        class="message"
+        role="status"
+        aria-live="polite"
     ></div>
 
-</section>
+
+    <!-- Game Statistics -->
+    <section class="card">
+
+        <div class="stats">
+
+            <div class="stat">
+                <strong id="players">0</strong>
+                <span>Players</span>
+            </div>
+
+            <div class="stat">
+                <strong id="cards">0</strong>
+                <span>Cards</span>
+            </div>
+
+            <div class="stat">
+                <strong id="pot">0 ETB</strong>
+                <span>Prize Pool</span>
+            </div>
+
+        </div>
+
+    </section>
 
 
-<!-- Controls -->
-<section class="card">
+    <!-- Live Game -->
+    <section class="card game-card">
 
-    <div class="controls">
-
-        <button
-            id="joinButton"
-            class="primary"
-            onclick="joinGame()"
+        <div
+            id="gameStatus"
+            class="status"
         >
-            🎮 Join Game
-        </button>
+            Waiting for game...
+        </div>
 
 
-        <button
-            id="bingoButton"
-            class="primary"
-            onclick="claimBingo()"
-            disabled
+        <!-- Current Number -->
+        <div class="number-title">
+            CURRENT NUMBER
+        </div>
+
+        <div
+            id="currentNumber"
+            class="current-number"
         >
-            🏆 BINGO!
-        </button>
+            —
+        </div>
 
 
-        <button
-            class="secondary"
-            onclick="refreshGame()"
+        <!-- Bingo Card -->
+        <div class="board-title">
+            <strong>YOUR BINGO CARD</strong>
+        </div>
+
+        <!-- Bingo Letters -->
+        <div class="bingo-letters">
+
+            <span>B</span>
+            <span>I</span>
+            <span>N</span>
+            <span>G</span>
+            <span>O</span>
+
+        </div>
+
+        <div
+            id="bingoBoard"
+            class="bingo-board"
+        ></div>
+
+    </section>
+
+
+    <!-- Controls -->
+    <section class="card">
+
+        <div class="controls">
+
+            <button
+                id="joinButton"
+                class="primary"
+                type="button"
+                onclick="joinGame()"
+            >
+                🎮 Join Game
+            </button>
+
+
+            <button
+                id="bingoButton"
+                class="primary bingo-button"
+                type="button"
+                onclick="claimBingo()"
+                disabled
+            >
+                🏆 BINGO!
+            </button>
+
+
+            <button
+                id="refreshButton"
+                class="secondary"
+                type="button"
+                onclick="refreshGame()"
+            >
+                🔄 Refresh Game
+            </button>
+
+        </div>
+
+    </section>
+
+
+    <!-- Called Numbers -->
+    <section class="card">
+
+        <h3>🔢 Called Numbers</h3>
+
+        <div
+            id="calledNumbers"
+            class="called-list"
         >
-            🔄 Refresh Game
-        </button>
+            No numbers called yet.
+        </div>
 
-    </div>
-
-</section>
+    </section>
 
 
-<!-- Called numbers -->
-<section class="card">
+    <!-- Game Information -->
+    <section class="card game-info">
 
-    <h3>Called Numbers</h3>
+        <div>
+            <span>Game</span>
+            <strong>75 Ball Bingo</strong>
+        </div>
 
-    <div
-        id="calledNumbers"
-        class="called-list"
-    >
-        No numbers called yet.
-    </div>
+        <div>
+            <span>Status</span>
+            <strong id="infoStatus">Waiting</strong>
+        </div>
 
-</section>
+    </section>
 
 
-<!-- Footer -->
-<footer class="footer">
-    Good Bingo Game • 75 Ball Bingo
-</footer>
+    <!-- Footer -->
+    <footer class="footer">
 
-</div><!-- Good Bingo Game JavaScript --><script src="/static/app.js"></script></body>
+        🎱 Good Bingo Game
+
+        <br>
+
+        <span>Live 75-Ball Bingo</span>
+
+    </footer>
+
+</div>
+
+
+<!-- Good Bingo Game JavaScript -->
+<script src="/static/app.js"></script>
+
+</body>
 </html>
