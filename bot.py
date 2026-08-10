@@ -1,3 +1,4 @@
+from pathlib import Path
 from telegram import Update
 from telegram.ext import CommandHandler, ContextTypes
 import logging
@@ -260,6 +261,22 @@ async def draw(
                 f"🏆 BINGO!\n\n"
                 f"🏆 Winner: {winner}"
             )
+
+            # Send Bingo sound directly to the winning Telegram user.
+            try:
+                sound_path = Path("static/sounds/bingo.wav")
+
+                with sound_path.open("rb") as audio:
+                    await context.bot.send_audio(
+                        chat_id=winner,
+                        audio=audio,
+                        caption="🎉 BINGO! Congratulations! 🏆"
+                    )
+
+            except Exception as audio_error:
+                logging.exception(
+                    f"Bingo audio error: {audio_error}"
+                )
 
     except Exception as e:
 
