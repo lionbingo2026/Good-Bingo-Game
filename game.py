@@ -339,32 +339,33 @@ class BingoGame:
         if user_id not in self.players:
             return False
 
-        if not isinstance(card, dict):
+        # Players are stored as:
+        # {
+        #     "card_number": number,
+        #     "card": 5x5 Bingo card
+        # }
+        if isinstance(card, dict) and "card" in card:
+            card = card["card"]
+
+        # The generated Bingo cards are 5x5 lists.
+        if not isinstance(card, list) or len(card) != 5:
             return False
 
-        required_columns = [
-            "B",
-            "I",
-            "N",
-            "G",
-            "O"
-        ]
-
-        # Make sure card has all columns.
-        for column in required_columns:
-
-            if column not in card:
-                return False
-
-            if not isinstance(card[column], list):
-                return False
-
-            if len(card[column]) != 5:
-                return False
+        if not all(
+            isinstance(row, list) and len(row) == 5
+            for row in card
+        ):
+            return False
 
         called = set(
             self.number_manager.get_called_numbers()
         )
+
+        def marked(value):
+            return (
+                value == "FREE"
+                or value in called
+            )
 
         # ====================================================
         # CHECK ROWS
@@ -372,109 +373,71 @@ class BingoGame:
 
         for row in range(5):
 
-            values = []
-
-            for column in required_columns:
-                values.append(
-                    card[column][row]
-                )
-
             if all(
-                value == "FREE"
-                or value in called
-                for value in values
+                marked(card[row][column])
+                for column in range(5)
             ):
                 print(
-                    f"🏆 Bingo row found for player {user_id}"
+                    f"🏆 Bingo ROW found for player {user_id}"
                 )
-
                 return True
 
         # ====================================================
         # CHECK COLUMNS
         # ====================================================
 
-        for column in required_columns:
-
-            values = card[column]
+        for column in range(5):
 
             if all(
-                value == "FREE"
-                or value in called
-                for value in values
+                marked(card[row][column])
+                for row in range(5)
             ):
                 print(
-                    f"🏆 Bingo column found for player {user_id}"
+                    f"🏆 Bingo COLUMN found for player {user_id}"
                 )
-
                 return True
 
         # ====================================================
-        # CHECK DIAGONAL 1
+        # CHECK DIAGONAL ↘
         # ====================================================
 
-        diagonal_1 = [
-            card["B"][0],
-            card["I"][1],
-            card["N"][2],
-            card["G"][3],
-            card["O"][4]
-        ]
-
         if all(
-            value == "FREE"
-            or value in called
-            for value in diagonal_1
+            marked(card[i][i])
+            for i in range(5)
         ):
             print(
-                f"🏆 Bingo diagonal found for player {user_id}"
+                f"🏆 Bingo DIAGONAL found for player {user_id}"
             )
-
             return True
 
         # ====================================================
-        # CHECK DIAGONAL 2
+        # CHECK DIAGONAL ↙
         # ====================================================
 
-        diagonal_2 = [
-            card["O"][0],
-            card["G"][1],
-            card["N"][2],
-            card["I"][3],
-            card["B"][4]
-        ]
-
         if all(
-            value == "FREE"
-            or value in called
-            for value in diagonal_2
+            marked(card[i][4 - i])
+            for i in range(5)
         ):
             print(
-                f"🏆 Bingo diagonal found for player {user_id}"
+                f"🏆 Bingo DIAGONAL found for player {user_id}"
             )
-
             return True
 
         # ====================================================
         # CHECK FOUR CORNERS
         # ====================================================
 
-        four_corners = [
-            card["B"][0],
-            card["O"][0],
-            card["B"][4],
-            card["O"][4]
+        corners = [
+            card[0][0],
+            card[0][4],
+            card[4][0],
+            card[4][4]
         ]
 
-        if all(
-            value == "FREE"
-            or value in called
-            for value in four_corners
-        ):
+        if all(marked(value) for value in corners):
             print(
-                f"🏆 Bingo four corners found for player {user_id}"
+                f"🏆 Bingo FOUR CORNERS found for player {user_id}"
             )
-
             return True
 
         return False
