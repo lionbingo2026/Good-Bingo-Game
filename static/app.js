@@ -530,6 +530,49 @@ function playNumberSound() {
     playTone(660, 0.10, 0.05);
 }
 
+function getBingoLetter(number) {
+    const n = Number(number);
+
+    if (n >= 1 && n <= 15) return "B";
+    if (n >= 16 && n <= 30) return "I";
+    if (n >= 31 && n <= 45) return "N";
+    if (n >= 46 && n <= 60) return "G";
+    if (n >= 61 && n <= 75) return "O";
+
+    return "";
+}
+
+function speakCalledNumber(number) {
+    const n = Number(number);
+    const letter = getBingoLetter(n);
+
+    if (
+        !Number.isInteger(n) ||
+        n < 1 ||
+        n > 75 ||
+        !letter
+    ) {
+        return;
+    }
+
+    if (!("speechSynthesis" in window)) {
+        return;
+    }
+
+    window.speechSynthesis.cancel();
+
+    const speech = new SpeechSynthesisUtterance(
+        `${letter} ${n}`
+    );
+
+    speech.lang = "en-US";
+    speech.rate = 0.85;
+    speech.pitch = 1;
+    speech.volume = 1;
+
+    window.speechSynthesis.speak(speech);
+}
+
 function playBingoSound() {
     playTone(523, 0.15, 0.07);
 
@@ -665,7 +708,12 @@ if (
     numericNumber !== lastSoundNumber
 ) {
     lastSoundNumber = numericNumber;
+
+    // Play the existing tone.
     playNumberSound();
+
+    // Announce the Bingo letter and number.
+    speakCalledNumber(numericNumber);
 }
 
 }

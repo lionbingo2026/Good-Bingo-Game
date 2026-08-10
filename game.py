@@ -486,11 +486,15 @@ class BingoGame:
     def set_winner(self, user_id):
 
         self.winner = user_id
+
+        # Stop the game immediately.
         self.running = False
+        self._draw_stop.set()
 
         print(
             f"🏆 WINNER: {user_id}"
         )
+        print("🛑 Automatic Bingo caller stopped.")
 
         return user_id
 
