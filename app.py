@@ -122,14 +122,6 @@ def bingo_caller():
                         f"🎱 Live Bingo Number: {number}"
                     )
 
-                    winner = game.check_winner()
-
-                    if winner is not None:
-
-                        print(
-                            f"🏆 Winner: {winner}"
-                        )
-
             time.sleep(DRAW_INTERVAL)
 
         except Exception as e:
@@ -208,6 +200,8 @@ def join():
         "Player"
     )
 
+    card_number = data.get("card_number")
+
     if not user_id:
 
         return jsonify({
@@ -223,7 +217,8 @@ def join():
     try:
 
         result = game.add_player(
-            user_id
+            user_id,
+            card_number=card_number
         )
 
         if not result.get("success"):
@@ -265,6 +260,9 @@ def join():
             "players":
                 len(game.players),
 
+            "card_number":
+                result.get("card_number"),
+
             "card":
                 result.get("card"),
 
@@ -288,6 +286,36 @@ def join():
             "message":
                 "Unable to join the game"
 
+        }), 500
+
+
+# ============================================================
+# AVAILABLE BINGO CARDS
+# ============================================================
+
+@app.route(
+    "/api/cards",
+    methods=["GET"]
+)
+def available_cards():
+
+    try:
+
+        return jsonify({
+            "success": True,
+            "cards": game.get_available_card_numbers()
+        })
+
+    except Exception as e:
+
+        print(
+            "Available cards error:",
+            repr(e)
+        )
+
+        return jsonify({
+            "success": False,
+            "cards": []
         }), 500
 
 

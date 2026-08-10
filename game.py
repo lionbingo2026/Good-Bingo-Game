@@ -18,6 +18,13 @@ class BingoGame:
     def __init__(self):
         self.players = {}
 
+        # 300 selectable Bingo cards.
+        # Each card number gets its own generated 75-ball card.
+        self.card_catalog = {
+            number: generate_card()
+            for number in range(1, 301)
+        }
+
         # One 75-ball number manager for this game.
         self.number_manager = CalledNumberManager()
 
@@ -79,7 +86,23 @@ class BingoGame:
     # ADD PLAYER
     # ========================================================
 
-    def add_player(self, user_id, card=None):
+    def get_available_card_numbers(self):
+        """Return card numbers that are still available."""
+
+        selected = {
+            player["card_number"]
+            for player in self.players.values()
+            if isinstance(player, dict)
+            and player.get("card_number") is not None
+        }
+
+        return [
+            number
+            for number in range(1, 301)
+            if number not in selected
+        ]
+
+    def add_player(self, user_id, card_number=None):
 
         # Game full
         if len(self.players) >= MAX_PLAYERS:
@@ -90,21 +113,61 @@ class BingoGame:
 
         # Already joined
         if user_id in self.players:
+            player = self.players[user_id]
+
             return {
                 "success": False,
                 "message": "Already joined",
                 "players": len(self.players),
-                "card": self.players[user_id]
+                "card_number": player.get("card_number"),
+                "card": player.get("card")
             }
 
-        # Generate card automatically.
-        if card is None:
-            card = generate_card()
+        # Card selection is required.
+        if card_number is None:
+            return {
+                "success": False,
+                "message": "Please choose a Bingo card first."
+            }
 
-        self.players[user_id] = card
+        try:
+            card_number = int(card_number)
+        except (TypeError, ValueError):
+            return {
+                "success": False,
+                "message": "Invalid card number."
+            }
+
+        # Only cards 1-300 are allowed.
+        if card_number < 1 or card_number > 300:
+            return {
+                "success": False,
+                "message": "Card number must be between 1 and 300."
+            }
+
+        # Prevent duplicate card selection.
+        for player in self.players.values():
+
+            if (
+                isinstance(player, dict)
+                and player.get("card_number") == card_number
+            ):
+                return {
+                    "success": False,
+                    "message": f"Card {card_number} is already taken."
+                }
+
+        # Get the actual card belonging to this number.
+        card = self.card_catalog[card_number]
+
+        self.players[user_id] = {
+            "card_number": card_number,
+            "card": card
+        }
 
         print(
             f"👤 Player joined: {user_id} "
+            f"with Card {card_number} "
             f"({len(self.players)} players)"
         )
 
@@ -120,6 +183,7 @@ class BingoGame:
             "players": len(self.players),
             "cards": len(self.players),
             "running": self.running,
+            "card_number": card_number,
             "card": card
         }
 
@@ -151,6 +215,14 @@ class BingoGame:
             f"🎱 Called Number: "
             f"{self.format_number(number)}"
         )
+
+        # Check all players immediately after each number.
+        winner = self.check_winner()
+
+        if winner is not None:
+            print(
+                f"🏆 Bingo winner detected: {winner}"
+            )
 
         return number
 
@@ -194,6 +266,7 @@ class BingoGame:
                 self.last_number
             ),
             "winner": self.winner,
+            "available_cards": self.get_available_card_numbers(),
             "called_count": self.number_manager.called_count(),
             "remaining_numbers": self.number_manager.remaining_count()
         }

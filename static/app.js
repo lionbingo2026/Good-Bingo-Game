@@ -6,6 +6,8 @@ let bingoCard = [];
 let calledNumbers = [];
 let joined = false;
 let pollingTimer = null;
+let selectedCardNumber = null;
+let availableCards = [];
 
 function initializeTelegram() {
 if (!tg) return;
@@ -68,14 +70,160 @@ return tg.initDataUnsafe.user;
 return null;
 }
 
+function createCardPicker() {
+
+const existing = document.getElementById("cardPicker");
+
+if (existing) return;
+
+const joinButton = document.getElementById("joinButton");
+
+if (!joinButton) return;
+
+const section = document.createElement("section");
+
+section.id = "cardPicker";
+section.className = "card";
+
+section.innerHTML = `
+    <div style="text-align:center;">
+        <h3>🎫 Choose Your Bingo Card</h3>
+
+        <p id="selectedCardText">
+            Select one card from 1 to 300
+        </p>
+
+        <div
+            id="cardChoices"
+            style="
+                display:grid;
+                grid-template-columns:
+                    repeat(5, minmax(45px, 1fr));
+                gap:8px;
+                max-height:360px;
+                overflow-y:auto;
+                padding:8px;
+            "
+        ></div>
+    </div>
+`;
+
+joinButton.parentElement.parentElement.insertBefore(
+    section,
+    joinButton.parentElement
+);
+
+}
+
+async function loadAvailableCards() {
+
+createCardPicker();
+
+const container =
+    document.getElementById("cardChoices");
+
+if (!container) return;
+
+try {
+
+    const data =
+        await apiRequest("/api/cards");
+
+    availableCards =
+        Array.isArray(data.cards)
+            ? data.cards
+            : [];
+
+    container.innerHTML = "";
+
+    availableCards.forEach(cardNumber => {
+
+        const button =
+            document.createElement("button");
+
+        button.type = "button";
+
+        button.textContent =
+            String(cardNumber).padStart(3, "0");
+
+        button.style.padding = "10px 4px";
+        button.style.cursor = "pointer";
+
+        button.addEventListener(
+            "click",
+            () => {
+
+                document
+                    .querySelectorAll(
+                        ".card-choice-button"
+                    )
+                    .forEach(btn => {
+                        btn.style.fontWeight = "normal";
+                    });
+
+                selectedCardNumber =
+                    cardNumber;
+
+                button.style.fontWeight =
+                    "bold";
+
+                const selected =
+                    document.getElementById(
+                        "selectedCardText"
+                    );
+
+                if (selected) {
+
+                    selected.textContent =
+                        `Selected Card: ${String(
+                            cardNumber
+                        ).padStart(3, "0")}`;
+
+                }
+
+            }
+        );
+
+        button.className =
+            "card-choice-button";
+
+        container.appendChild(button);
+
+    });
+
+} catch (error) {
+
+    console.warn(
+        "Unable to load available cards:",
+        error.message
+    );
+
+}
+
+}
+
 async function joinGame() {
-const button = document.getElementById("joinButton");
+
+const button =
+    document.getElementById("joinButton");
 
 if (button) button.disabled = true;
+
+if (!selectedCardNumber) {
+
+    showMessage(
+        "Please choose a Bingo card first."
+    );
+
+    if (button) button.disabled = false;
+
+    return;
+}
 
 const user = getTelegramUser();
 
 if (!user || !user.id) {
+
     showMessage(
         "Please open Good Bingo Game from the Telegram bot."
     );
@@ -90,43 +238,90 @@ if (!user || !user.id) {
 }
 
 try {
-    const data = await apiRequest("/api/join", {
-        method: "POST",
-        body: JSON.stringify({
-            telegram_id: user.id,
-            username: user.username || "",
-            first_name: user.first_name || "Player"
-        })
-    });
+
+    const data =
+        await apiRequest("/api/join", {
+
+            method: "POST",
+
+            body: JSON.stringify({
+
+                telegram_id: user.id,
+
+                username:
+                    user.username || "",
+
+                first_name:
+                    user.first_name || "Player",
+
+                card_number:
+                    selectedCardNumber
+
+            })
+
+        });
 
     joined = true;
 
     showMessage(
-        data.message || "You joined the Bingo game!"
+        data.message ||
+        `You joined with Card ${selectedCardNumber}!`
     );
 
-    setStatus("You joined the game!");
+    setStatus(
+        "You joined the game!"
+    );
+
+    if (data.card) {
+
+        bingoCard =
+            normalizeCard(data.card);
+
+        renderCard();
+
+    }
 
     const bingoButton =
-        document.getElementById("bingoButton");
+        document.getElementById(
+            "bingoButton"
+        );
 
     if (bingoButton) {
         bingoButton.disabled = false;
     }
 
-    if (data.card) {
-        bingoCard = normalizeCard(data.card);
-        renderCard();
+    const picker =
+        document.getElementById("cardPicker");
+
+    if (picker) {
+        picker.style.display = "none";
+    }
+
+    if (button) {
+        button.textContent =
+            `🎫 Card ${String(
+                data.card_number ||
+                selectedCardNumber
+            ).padStart(3, "0")}`;
+
+        button.disabled = true;
     }
 
     await refreshGame();
 
 } catch (error) {
+
     showMessage(
-        error.message || "Unable to join game."
+        error.message ||
+        "Unable to join game."
     );
 
     if (button) button.disabled = false;
+
+    // Refresh because another player may
+    // have taken the selected card.
+    await loadAvailableCards();
+
 }
 
 }
@@ -378,13 +573,17 @@ pollingTimer = setInterval(() => {
 
 }
 
-function startApp() {
+async function startApp() {
+
 initializeTelegram();
 
 renderCard();
 renderCalledNumbers();
 
-refreshGame();
+await loadAvailableCards();
+
+await refreshGame();
+
 startPolling();
 
 }
