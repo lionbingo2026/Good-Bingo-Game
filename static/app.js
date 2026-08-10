@@ -469,6 +469,176 @@ if (data.card) {
     renderCard();
 }
 
+// Check Bingo only after the latest card and called numbers
+// have both been applied.
+checkLocalBingo();
+
+}
+
+
+// ========================================================
+// BINGO SOUND + NUMBER CALL SOUND
+// ========================================================
+
+let lastSoundNumber = null;
+let audioContext = null;
+let bingoAlertShown = false;
+
+function getAudioContext() {
+    if (!audioContext) {
+        const AudioContext =
+            window.AudioContext ||
+            window.webkitAudioContext;
+
+        if (!AudioContext) return null;
+
+        audioContext = new AudioContext();
+    }
+
+    if (audioContext.state === "suspended") {
+        audioContext.resume().catch(() => {});
+    }
+
+    return audioContext;
+}
+
+function playTone(frequency, duration = 0.12, volume = 0.06) {
+    const ctx = getAudioContext();
+
+    if (!ctx) return;
+
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    oscillator.frequency.value = frequency;
+    oscillator.type = "sine";
+
+    gain.gain.setValueAtTime(volume, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(
+        0.001,
+        ctx.currentTime + duration
+    );
+
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.start();
+    oscillator.stop(ctx.currentTime + duration);
+}
+
+function playNumberSound() {
+    playTone(660, 0.10, 0.05);
+}
+
+function playBingoSound() {
+    playTone(523, 0.15, 0.07);
+
+    setTimeout(() => playTone(659, 0.15, 0.07), 160);
+    setTimeout(() => playTone(784, 0.25, 0.08), 320);
+}
+
+function showBingoAlert(message = "🎉 BINGO!") {
+    const alert = document.getElementById("bingoAlert");
+
+    if (!alert) return;
+
+    alert.textContent = message;
+    alert.style.display = "block";
+
+    playBingoSound();
+}
+
+function isMarked(value) {
+    return value === "FREE" ||
+        calledNumbers.includes(Number(value));
+}
+
+function hasBingoPattern() {
+    if (
+        !Array.isArray(bingoCard) ||
+        bingoCard.length !== 5
+    ) {
+        return false;
+    }
+
+    // Rows
+    for (let row = 0; row < 5; row++) {
+        if (
+            bingoCard[row].every(isMarked)
+        ) {
+            return true;
+        }
+    }
+
+    // Columns
+    for (let col = 0; col < 5; col++) {
+        let complete = true;
+
+        for (let row = 0; row < 5; row++) {
+            if (!isMarked(bingoCard[row][col])) {
+                complete = false;
+                break;
+            }
+        }
+
+        if (complete) return true;
+    }
+
+    // Diagonal ↘
+    if (
+        isMarked(bingoCard[0][0]) &&
+        isMarked(bingoCard[1][1]) &&
+        isMarked(bingoCard[2][2]) &&
+        isMarked(bingoCard[3][3]) &&
+        isMarked(bingoCard[4][4])
+    ) {
+        return true;
+    }
+
+    // Diagonal ↙
+    if (
+        isMarked(bingoCard[0][4]) &&
+        isMarked(bingoCard[1][3]) &&
+        isMarked(bingoCard[2][2]) &&
+        isMarked(bingoCard[3][1]) &&
+        isMarked(bingoCard[4][0])
+    ) {
+        return true;
+    }
+
+    // Four corners
+    if (
+        isMarked(bingoCard[0][0]) &&
+        isMarked(bingoCard[0][4]) &&
+        isMarked(bingoCard[4][0]) &&
+        isMarked(bingoCard[4][4])
+    ) {
+        return true;
+    }
+
+    return false;
+}
+
+function checkLocalBingo() {
+    if (!joined) return;
+
+    const button =
+        document.getElementById("bingoButton");
+
+    if (!hasBingoPattern()) {
+        if (button) button.disabled = true;
+        bingoAlertShown = false;
+        return;
+    }
+
+    if (button) {
+        button.disabled = false;
+    }
+
+    if (!bingoAlertShown) {
+        bingoAlertShown = true;
+        showBingoAlert("🎉 BINGO! You have a winning pattern!");
+    }
 }
 
 function updateCurrentNumber(number) {
@@ -485,7 +655,18 @@ if (
     return;
 }
 
-element.textContent = number;
+const numericNumber = Number(number);
+
+element.textContent = numericNumber;
+
+// Play sound only when a NEW number is called.
+if (
+    Number.isInteger(numericNumber) &&
+    numericNumber !== lastSoundNumber
+) {
+    lastSoundNumber = numericNumber;
+    playNumberSound();
+}
 
 }
 

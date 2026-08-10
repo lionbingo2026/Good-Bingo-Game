@@ -455,6 +455,28 @@ class BingoGame:
 
             return True
 
+        # ====================================================
+        # CHECK FOUR CORNERS
+        # ====================================================
+
+        four_corners = [
+            card["B"][0],
+            card["O"][0],
+            card["B"][4],
+            card["O"][4]
+        ]
+
+        if all(
+            value == "FREE"
+            or value in called
+            for value in four_corners
+        ):
+            print(
+                f"🏆 Bingo four corners found for player {user_id}"
+            )
+
+            return True
+
         return False
 
     # ========================================================
