@@ -261,6 +261,13 @@ try {
 
         });
 
+    if (!data.success) {
+        throw new Error(
+            data.message ||
+            "Unable to join the game."
+        );
+    }
+
     joined = true;
 
     showMessage(
