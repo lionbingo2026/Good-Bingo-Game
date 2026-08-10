@@ -8,7 +8,7 @@ import time
 
 from bot import setup_handlers
 from database import init_db
-from game import BingoGame
+from shared import game
 
 
 # ============================================================
@@ -90,7 +90,6 @@ ensure_telegram_initialized()
 # BINGO GAME
 # ============================================================
 
-game = BingoGame()
 
 
 # ============================================================

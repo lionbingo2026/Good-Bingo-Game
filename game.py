@@ -1,7 +1,8 @@
-import random
+# game.py
 
 from config import MAX_PLAYERS
-from cards import generate_card
+from called_number import CalledNumberManager
+from cartela import generate_card
 
 
 # ============================================================
@@ -16,10 +17,26 @@ class BingoGame:
 
     def __init__(self):
         self.players = {}
-        self.called_numbers = []
+
+        # One 75-ball number manager for this game.
+        self.number_manager = CalledNumberManager()
+
         self.running = False
         self.winner = None
         self.last_number = None
+
+    # ========================================================
+    # CALLED NUMBERS COMPATIBILITY
+    # ========================================================
+
+    @property
+    def called_numbers(self):
+        """
+        Keep compatibility with existing app.py and bot.py.
+
+        The actual numbers are stored by CalledNumberManager.
+        """
+        return self.number_manager.called_numbers
 
     # ========================================================
     # START GAME
@@ -34,7 +51,9 @@ class BingoGame:
             )
             return False
 
-        self.called_numbers.clear()
+        # Start a fresh 75-ball sequence.
+        self.number_manager.reset()
+
         self.running = True
         self.winner = None
         self.last_number = None
@@ -78,7 +97,7 @@ class BingoGame:
                 "card": self.players[user_id]
             }
 
-        # Generate card automatically
+        # Generate card automatically.
         if card is None:
             card = generate_card()
 
@@ -89,10 +108,7 @@ class BingoGame:
             f"({len(self.players)} players)"
         )
 
-        # ====================================================
-        # AUTOMATICALLY START AT 2 PLAYERS
-        # ====================================================
-
+        # Automatically start at 2 players.
         if (
             len(self.players) >= MIN_PLAYERS_TO_START
             and not self.running
@@ -108,23 +124,20 @@ class BingoGame:
         }
 
     # ========================================================
-    # DRAW RANDOM 75-BALL NUMBER
+    # DRAW 75-BALL NUMBER
     # ========================================================
 
     def draw_number(self):
 
-        # Game not running
+        # Game not running.
         if not self.running:
             return None
 
-        # All 75 numbers already called
-        available = [
-            number
-            for number in range(1, 76)
-            if number not in self.called_numbers
-        ]
+        # Use CalledNumberManager.
+        number = self.number_manager.call_number()
 
-        if not available:
+        # All 75 numbers have been called.
+        if number is None:
 
             print("🎱 All 75 numbers have been called.")
 
@@ -132,16 +145,11 @@ class BingoGame:
 
             return None
 
-        # Draw random number
-        number = random.choice(available)
-
-        # Save number
-        self.called_numbers.append(number)
-
         self.last_number = number
 
         print(
-            f"🎱 Called Number: {number}"
+            f"🎱 Called Number: "
+            f"{self.format_number(number)}"
         )
 
         return number
@@ -152,31 +160,16 @@ class BingoGame:
 
     def get_bingo_letter(self, number):
 
-        if number is None:
-            return None
-
-        if 1 <= number <= 15:
-            return "B"
-
-        if 16 <= number <= 30:
-            return "I"
-
-        if 31 <= number <= 45:
-            return "N"
-
-        if 46 <= number <= 60:
-            return "G"
-
-        if 61 <= number <= 75:
-            return "O"
-
-        return None
+        return self.number_manager.get_letter(number)
 
     # ========================================================
     # DISPLAY NUMBER
     # ========================================================
 
     def format_number(self, number):
+
+        if number is None:
+            return None
 
         letter = self.get_bingo_letter(number)
 
@@ -195,12 +188,14 @@ class BingoGame:
             "running": self.running,
             "players": len(self.players),
             "cards": len(self.players),
-            "called_numbers": self.called_numbers,
+            "called_numbers": self.number_manager.get_called_numbers(),
             "last_number": self.last_number,
             "last_number_display": self.format_number(
                 self.last_number
             ),
-            "winner": self.winner
+            "winner": self.winner,
+            "called_count": self.number_manager.called_count(),
+            "remaining_numbers": self.number_manager.remaining_count()
         }
 
     # ========================================================
@@ -209,18 +204,17 @@ class BingoGame:
 
     def check_winner(self):
 
-        # Winner already found
+        # Winner already found.
         if self.winner is not None:
             return self.winner
 
-        # Check every player
+        # Check every player.
         for user_id, card in self.players.items():
 
             if not card:
                 continue
 
             if self.check_bingo(user_id, card):
-
                 return self.set_winner(user_id)
 
         return None
@@ -245,7 +239,7 @@ class BingoGame:
             "O"
         ]
 
-        # Make sure card has all columns
+        # Make sure card has all columns.
         for column in required_columns:
 
             if column not in card:
@@ -257,7 +251,9 @@ class BingoGame:
             if len(card[column]) != 5:
                 return False
 
-        called = set(self.called_numbers)
+        called = set(
+            self.number_manager.get_called_numbers()
+        )
 
         # ====================================================
         # CHECK ROWS
@@ -268,7 +264,6 @@ class BingoGame:
             values = []
 
             for column in required_columns:
-
                 values.append(
                     card[column][row]
                 )
@@ -373,7 +368,8 @@ class BingoGame:
     def reset_game(self):
 
         self.players.clear()
-        self.called_numbers.clear()
+
+        self.number_manager.reset()
 
         self.running = False
         self.winner = None
