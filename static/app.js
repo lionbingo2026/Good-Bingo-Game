@@ -685,37 +685,51 @@ function checkLocalBingo() {
 }
 
 function updateCurrentNumber(number) {
-const element =
-document.getElementById("currentNumber");
+    const element =
+        document.getElementById("currentNumber");
 
-if (!element) return;
+    if (!element) return;
 
-if (
-    number === null ||
-    number === undefined
-) {
-    element.textContent = "—";
-    return;
-}
+    if (
+        number === null ||
+        number === undefined
+    ) {
+        element.textContent = "—";
+        return;
+    }
 
-const numericNumber = Number(number);
+    const numericNumber = Number(number);
 
-element.textContent = numericNumber;
+    if (
+        !Number.isInteger(numericNumber) ||
+        numericNumber < 1 ||
+        numericNumber > 75
+    ) {
+        element.textContent = "—";
+        return;
+    }
 
-// Play sound only when a NEW number is called.
-if (
-    Number.isInteger(numericNumber) &&
-    numericNumber !== lastSoundNumber
-) {
-    lastSoundNumber = numericNumber;
+    // Display Bingo letter together with the number.
+    // B = 1-15
+    // I = 16-30
+    // N = 31-45
+    // G = 46-60
+    // O = 61-75
+    const letter = getBingoLetter(numericNumber);
 
-    // Play the existing tone.
-    playNumberSound();
+    element.textContent =
+        `${letter}-${numericNumber}`;
 
-    // Announce the Bingo letter and number.
-    speakCalledNumber(numericNumber);
-}
+    // Play sound only when a NEW number is called.
+    if (numericNumber !== lastSoundNumber) {
+        lastSoundNumber = numericNumber;
 
+        // Play the existing tone.
+        playNumberSound();
+
+        // Announce the Bingo letter and number.
+        speakCalledNumber(numericNumber);
+    }
 }
 
 function renderCalledNumbers() {
