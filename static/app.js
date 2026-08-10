@@ -530,6 +530,54 @@ function playNumberSound() {
     playTone(660, 0.10, 0.05);
 }
 
+// Unlock browser audio after the player's first interaction.
+// Mobile browsers may block automatic audio until the user taps.
+function unlockAudio() {
+    const ctx = getAudioContext();
+
+    if (!ctx) return;
+
+    if (ctx.state === "suspended") {
+        ctx.resume().catch(() => {});
+    }
+
+    // Unlock speech synthesis on mobile browsers.
+    if ("speechSynthesis" in window) {
+        try {
+            window.speechSynthesis.cancel();
+
+            const speechUnlock =
+                new SpeechSynthesisUtterance("");
+
+            speechUnlock.volume = 0;
+            speechUnlock.rate = 1;
+
+            window.speechSynthesis.speak(speechUnlock);
+        } catch (error) {
+            console.warn(
+                "Speech unlock failed:",
+                error
+            );
+        }
+    }
+
+    // Silent audio node used only to unlock the audio context.
+    try {
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+
+        gain.gain.value = 0.0001;
+
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start();
+        oscillator.stop(ctx.currentTime + 0.01);
+    } catch (error) {
+        console.warn("Audio unlock failed:", error);
+    }
+}
+
 function getBingoLetter(number) {
     const n = Number(number);
 
@@ -822,6 +870,13 @@ pollingTimer = setInterval(() => {
 }, 3000);
 
 }
+
+// Unlock audio when the player first interacts with the Mini App.
+document.addEventListener(
+    "pointerdown",
+    unlockAudio,
+    { once: true }
+);
 
 async function startApp() {
 
