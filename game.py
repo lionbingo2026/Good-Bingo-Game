@@ -2,6 +2,7 @@
 
 from config import MAX_PLAYERS
 from called_number import CalledNumberManager
+import threading
 from cartela import generate_card
 
 
@@ -11,6 +12,7 @@ from cartela import generate_card
 # ============================================================
 
 MIN_PLAYERS_TO_START = 2
+AUTO_DRAW_INTERVAL = 5
 
 
 class BingoGame:
@@ -31,6 +33,8 @@ class BingoGame:
         self.running = False
         self.winner = None
         self.last_number = None
+        self._draw_thread = None
+        self._draw_stop = threading.Event()
 
     # ========================================================
     # CALLED NUMBERS COMPATIBILITY
@@ -65,6 +69,19 @@ class BingoGame:
         self.winner = None
         self.last_number = None
 
+        # Start automatic 75-ball caller.
+        self._draw_stop.clear()
+
+        if (
+            self._draw_thread is None
+            or not self._draw_thread.is_alive()
+        ):
+            self._draw_thread = threading.Thread(
+                target=self._auto_draw_loop,
+                daemon=True
+            )
+            self._draw_thread.start()
+
         print("🎱 Good Bingo Game Started!")
         print(
             f"👥 Players: {len(self.players)}"
@@ -73,12 +90,33 @@ class BingoGame:
         return True
 
     # ========================================================
+    # AUTOMATIC NUMBER CALLER
+    # ========================================================
+
+    def _auto_draw_loop(self):
+        while self.running and not self._draw_stop.is_set():
+
+            # Wait before the first automatic number.
+            if self._draw_stop.wait(AUTO_DRAW_INTERVAL):
+                break
+
+            if not self.running:
+                break
+
+            number = self.draw_number()
+
+            if number is None:
+                break
+
+    # ========================================================
+    # ========================================================
     # STOP GAME
     # ========================================================
 
     def stop_game(self):
 
         self.running = False
+        self._draw_stop.set()
 
         print("🛑 Good Bingo Game Stopped.")
 
