@@ -31,12 +31,17 @@ def deposit(telegram_id, amount):
 
 def withdraw(telegram_id, amount):
 
+    MIN_REMAINING_BALANCE = 50
+
     if amount < MIN_WITHDRAW:
         return False
 
     balance = get_balance(telegram_id)
 
     if balance < amount:
+        return False
+
+    if balance - amount < MIN_REMAINING_BALANCE:
         return False
 
     update_balance(telegram_id, -amount)
