@@ -1,6 +1,16 @@
 from pathlib import Path
-from telegram import Update
-from telegram.ext import CommandHandler, ContextTypes
+from telegram import (
+    Update,
+    ReplyKeyboardMarkup,
+    KeyboardButton
+)
+from telegram.ext import (
+    CommandHandler,
+    ContextTypes,
+    ConversationHandler,
+    MessageHandler,
+    filters
+)
 import logging
 
 from config import GAME_NAME
@@ -22,6 +32,21 @@ logging.basicConfig(
 # /start
 # ============================================================
 
+REGISTRATION_NAME, REGISTRATION_PHONE = range(2)
+
+
+def main_menu_keyboard():
+    return ReplyKeyboardMarkup(
+        [
+            ["🎮 Play Bingo", "💰 Wallet"],
+            ["➕ Deposit", "💸 Withdrawal"],
+            ["👤 My Account", "📋 Transactions"],
+            ["❓ Help"]
+        ],
+        resize_keyboard=True
+    )
+
+
 async def start(
     update: Update,
     context: ContextTypes.DEFAULT_TYPE
@@ -30,25 +55,26 @@ async def start(
     user = update.effective_user
 
     try:
-        new_user = create_user(
-            user.id,
-            user.username
-        )
+        existing_user = get_user(user.id)
 
-        if new_user:
-            bonus = "🎁 Registration bonus: 10 ETB"
-        else:
-            bonus = "Welcome back!"
+        if existing_user:
+            await update.message.reply_text(
+                f"🎲 {GAME_NAME}\n\n"
+                f"Welcome back, {user.first_name}! 👋\n\n"
+                f"💰 Balance: {existing_user['balance']} ETB",
+                reply_markup=main_menu_keyboard()
+            )
+            return ConversationHandler.END
+
+        context.user_data.clear()
 
         await update.message.reply_text(
-            f"🎲 {GAME_NAME}\n\n"
-            f"Hello {user.first_name}\n"
-            f"{bonus}\n\n"
-            "🎫 /play - Get Bingo card\n"
-            "🎮 /join - Join game\n"
-            "🎱 /draw - Draw number\n"
-            "💰 /balance - Check wallet"
+            f"🎉 Welcome to {GAME_NAME}!\n\n"
+            "Let's create your account.\n\n"
+            "Please enter your full name:"
         )
+
+        return REGISTRATION_NAME
 
     except Exception as e:
 
@@ -57,8 +83,129 @@ async def start(
         )
 
         await update.message.reply_text(
-            "❌ Error starting account."
+            "❌ Error starting registration."
         )
+
+        return ConversationHandler.END
+
+
+async def registration_name(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    name = update.message.text.strip()
+
+    if len(name) < 2:
+        await update.message.reply_text(
+            "❌ Please enter a valid name."
+        )
+        return REGISTRATION_NAME
+
+    context.user_data["full_name"] = name
+
+    keyboard = ReplyKeyboardMarkup(
+        [
+            [
+                KeyboardButton(
+                    "📱 Share Phone Number",
+                    request_contact=True
+                )
+            ]
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True
+    )
+
+    await update.message.reply_text(
+        "Great! 👍\n\n"
+        "Now please share your phone number "
+        "using the button below.",
+        reply_markup=keyboard
+    )
+
+    return REGISTRATION_PHONE
+
+
+async def registration_phone(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    contact = update.message.contact
+
+    if not contact:
+        await update.message.reply_text(
+            "❌ Please use the '📱 Share Phone Number' button."
+        )
+        return REGISTRATION_PHONE
+
+    if contact.user_id and contact.user_id != update.effective_user.id:
+        await update.message.reply_text(
+            "❌ Please share your own phone number."
+        )
+        return REGISTRATION_PHONE
+
+    user = update.effective_user
+    full_name = context.user_data.get("full_name")
+    phone_number = contact.phone_number
+
+    try:
+        new_user = create_user(
+            user.id,
+            user.username,
+            full_name,
+            phone_number
+        )
+
+        if not new_user:
+            await update.message.reply_text(
+                "Welcome back! Your account already exists.",
+                reply_markup=main_menu_keyboard()
+            )
+            return ConversationHandler.END
+
+        await update.message.reply_text(
+            "✅ Registration complete!\n\n"
+            f"🎉 Welcome to {GAME_NAME}!\n\n"
+            "Your account is ready.\n\n"
+            "🎁 Registration Bonus: +20 ETB\n"
+            "💰 Your balance: 20 ETB\n\n"
+            "Choose an option below to continue.",
+            reply_markup=main_menu_keyboard()
+        )
+
+        context.user_data.clear()
+
+        return ConversationHandler.END
+
+    except Exception as e:
+
+        logging.exception(
+            f"Registration error: {e}"
+        )
+
+        await update.message.reply_text(
+            "❌ Registration failed. Please try /start again.",
+            reply_markup=main_menu_keyboard()
+        )
+
+        return ConversationHandler.END
+
+
+async def cancel_registration(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+
+    context.user_data.clear()
+
+    await update.message.reply_text(
+        "Registration cancelled.",
+        reply_markup=main_menu_keyboard()
+    )
+
+    return ConversationHandler.END
 
 
 # ============================================================
@@ -331,6 +478,140 @@ async def balance(
 
 
 # ============================================================
+# TELEGRAM MENU HANDLERS
+# ============================================================
+
+async def menu_wallet(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    user = update.effective_user
+    data = get_user(user.id)
+
+    if not data:
+        await update.message.reply_text(
+            "Please use /start first."
+        )
+        return
+
+    await update.message.reply_text(
+        f"💰 Wallet\n\n"
+        f"Balance: {data['balance']} ETB"
+    )
+
+
+async def menu_account(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    user = update.effective_user
+    data = get_user(user.id)
+
+    if not data:
+        await update.message.reply_text(
+            "Please use /start first."
+        )
+        return
+
+    full_name = data["full_name"] or user.first_name
+    phone = data["phone_number"] or "Not provided"
+
+    await update.message.reply_text(
+        f"👤 My Account\n\n"
+        f"Name: {full_name}\n"
+        f"Phone: {phone}\n"
+        f"Telegram ID: {user.id}\n"
+        f"Balance: {data['balance']} ETB"
+    )
+
+
+async def menu_transactions(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    user = update.effective_user
+
+    try:
+        conn = __import__("sqlite3").connect("bingo.db")
+        conn.row_factory = __import__("sqlite3").Row
+
+        rows = conn.execute(
+            """
+            SELECT amount, type, status
+            FROM transactions
+            WHERE telegram_id=?
+            ORDER BY id DESC
+            LIMIT 10
+            """,
+            (user.id,)
+        ).fetchall()
+
+        conn.close()
+
+        if not rows:
+            await update.message.reply_text(
+                "📋 Transactions\n\n"
+                "No transactions yet."
+            )
+            return
+
+        lines = ["📋 Recent Transactions\n"]
+
+        for row in rows:
+            lines.append(
+                f"• {row['type']}: "
+                f"{row['amount']} ETB "
+                f"({row['status']})"
+            )
+
+        await update.message.reply_text(
+            "\n".join(lines)
+        )
+
+    except Exception as e:
+        logging.exception(
+            f"Transactions error: {e}"
+        )
+        await update.message.reply_text(
+            "❌ Could not load transactions."
+        )
+
+
+async def menu_help(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    await update.message.reply_text(
+        f"❓ {GAME_NAME} Help\n\n"
+        "🎮 /play - Get a Bingo card\n"
+        "🎮 /join - Join the current game\n"
+        "🎱 /draw - Draw a number\n"
+        "💰 /balance - Check balance\n"
+        "/start - Open the main menu"
+    )
+
+
+async def menu_deposit(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    await update.message.reply_text(
+        "➕ Deposit\n\n"
+        "Deposit functionality is currently being prepared."
+    )
+
+
+async def menu_withdrawal(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE
+):
+    await update.message.reply_text(
+        "💸 Withdrawal\n\n"
+        "Withdrawal functionality is currently being prepared."
+    )
+
+
+# ============================================================
 # ERROR HANDLER
 # ============================================================
 
@@ -350,10 +631,78 @@ async def error_handler(
 
 def setup_handlers(application):
 
+    registration_handler = ConversationHandler(
+        entry_points=[
+            CommandHandler("start", start)
+        ],
+        states={
+            REGISTRATION_NAME: [
+                MessageHandler(
+                    filters.TEXT & ~filters.COMMAND,
+                    registration_name
+                )
+            ],
+            REGISTRATION_PHONE: [
+                MessageHandler(
+                    filters.CONTACT,
+                    registration_phone
+                )
+            ],
+        },
+        fallbacks=[
+            CommandHandler("cancel", cancel_registration),
+            CommandHandler("start", start)
+        ],
+    )
+
+    application.add_handler(registration_handler)
+
     application.add_handler(
-        CommandHandler(
-            "start",
-            start
+        MessageHandler(
+            filters.Regex("^🎮 Play Bingo$"),
+            play
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^💰 Wallet$"),
+            menu_wallet
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^➕ Deposit$"),
+            menu_deposit
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^💸 Withdrawal$"),
+            menu_withdrawal
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^👤 My Account$"),
+            menu_account
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^📋 Transactions$"),
+            menu_transactions
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^❓ Help$"),
+            menu_help
         )
     )
 

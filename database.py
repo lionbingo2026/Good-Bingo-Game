@@ -1,4 +1,5 @@
 import sqlite3
+from config import REGISTRATION_BONUS
 
 
 DB_NAME = "bingo.db"
@@ -19,7 +20,7 @@ def init_db():
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         telegram_id INTEGER UNIQUE NOT NULL,
         username TEXT,
-        balance INTEGER DEFAULT 10
+        balance INTEGER DEFAULT 0
     )
     """)
 
@@ -58,11 +59,38 @@ def init_db():
     WHERE type = 'winner_payout'
     """)
 
+    # --------------------------------------------------------
+    # Upgrade users table for registration
+    # --------------------------------------------------------
+
+    cur.execute("PRAGMA table_info(users)")
+    user_columns = {
+        row["name"]
+        for row in cur.fetchall()
+    }
+
+    if "full_name" not in user_columns:
+        cur.execute("""
+        ALTER TABLE users
+        ADD COLUMN full_name TEXT
+        """)
+
+    if "phone_number" not in user_columns:
+        cur.execute("""
+        ALTER TABLE users
+        ADD COLUMN phone_number TEXT
+        """)
+
     conn.commit()
     conn.close()
 
 
-def create_user(telegram_id, username):
+def create_user(
+    telegram_id,
+    username,
+    full_name=None,
+    phone_number=None
+):
     conn = get_connection()
     cur = conn.cursor()
 
@@ -76,9 +104,21 @@ def create_user(telegram_id, username):
         return False
 
     cur.execute("""
-    INSERT INTO users (telegram_id, username, balance)
-    VALUES (?, ?, ?)
-    """, (telegram_id, username, 10))
+    INSERT INTO users (
+        telegram_id,
+        username,
+        full_name,
+        phone_number,
+        balance
+    )
+    VALUES (?, ?, ?, ?, ?)
+    """, (
+        telegram_id,
+        username,
+        full_name,
+        phone_number,
+        REGISTRATION_BONUS
+    ))
 
     conn.commit()
     conn.close()
