@@ -21,3 +21,28 @@ Good Bingo Game is a Telegram live Bingo game built with:
 ✅ Live Bingo web board  
 
 ## Project Structure
+
+See the project files in this repository.
+
+## Game
+
+- 75 Ball Bingo
+- 5x5 cards
+- FREE center square
+- Automatic number drawing
+- Automatic winner detection
+
+## Wallet
+
+- Registration bonus
+- Deposits
+- Withdrawals
+- Transaction history
+
+## Deployment
+
+The application can be deployed with Gunicorn on Render.
+
+## License
+
+This project is intended for educational and development purposes.
