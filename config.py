@@ -75,6 +75,7 @@ CURRENCY = "ETB"
 MIN_DEPOSIT = 50
 
 MIN_WITHDRAW = 100
+MIN_REMAINING_BALANCE = 50
 
 
 # ==========================================

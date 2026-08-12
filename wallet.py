@@ -6,7 +6,8 @@ from database import (
 
 from config import (
     MIN_DEPOSIT,
-    MIN_WITHDRAW
+    MIN_WITHDRAW,
+    MIN_REMAINING_BALANCE
 )
 
 
@@ -30,8 +31,6 @@ def deposit(telegram_id, amount):
 
 
 def withdraw(telegram_id, amount):
-
-    MIN_REMAINING_BALANCE = 50
 
     if amount < MIN_WITHDRAW:
         return False
