@@ -2,7 +2,9 @@ from pathlib import Path
 from telegram import (
     Update,
     ReplyKeyboardMarkup,
-    KeyboardButton
+    KeyboardButton,
+    MenuButtonWebApp,
+    WebAppInfo
 )
 from telegram.ext import (
     CommandHandler,
@@ -13,7 +15,7 @@ from telegram.ext import (
 )
 import logging
 
-from config import GAME_NAME
+from config import GAME_NAME, MINI_APP_URL
 from database import create_user, get_user
 from cartela import generate_card, format_card
 from shared import game
@@ -615,13 +617,19 @@ async def menu_withdrawal(
 # ERROR HANDLER
 # ============================================================
 
-async def error_handler(
-    update,
-    context
-):
+async def error_handler(update, context):
+    logging.error("========== TELEGRAM ERROR ==========")
+    logging.error("ERROR TYPE: %s", type(context.error).__name__)
+    logging.error("ERROR: %s", context.error)
+    logging.exception("FULL TRACEBACK")
+    logging.error("====================================")
 
-    logging.error(
-        f"Telegram error: {context.error}"
+async def setup_mini_app_menu(application):
+    await application.bot.set_chat_menu_button(
+        menu_button=MenuButtonWebApp(
+            text="🎮 Play Bingo",
+            web_app=WebAppInfo(url=MINI_APP_URL)
+        )
     )
 
 

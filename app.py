@@ -6,7 +6,7 @@ import os
 import threading
 import time
 
-from bot import setup_handlers
+from bot import setup_handlers, setup_mini_app_menu
 from database import init_db
 from shared import game
 
@@ -75,6 +75,10 @@ def ensure_telegram_initialized():
 
         telegram_loop.run_until_complete(
             telegram_app.initialize()
+        )
+
+        telegram_loop.run_until_complete(
+            setup_mini_app_menu(telegram_app)
         )
 
         print(
