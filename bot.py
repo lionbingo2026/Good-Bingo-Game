@@ -40,10 +40,11 @@ REGISTRATION_NAME, REGISTRATION_PHONE = range(2)
 def main_menu_keyboard():
     return ReplyKeyboardMarkup(
         [
-            ["🎮 Play Bingo", "💰 Wallet"],
-            ["➕ Deposit", "💸 Withdrawal"],
-            ["👤 My Account", "📋 Transactions"],
-            ["❓ Help"]
+            ["🎮 Play Bingo", "🎫 My Cards"],
+            ["💰 Wallet", "➕ Deposit"],
+            ["💸 Withdrawal", "📋 Transactions"],
+            ["👤 My Account", "🏆 Winners"],
+            ["ℹ️ Game Rules", "❓ Help"]
         ],
         resize_keyboard=True
     )
@@ -213,6 +214,37 @@ async def cancel_registration(
 # ============================================================
 # /play
 # ============================================================
+
+async def my_cards(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+
+    await update.message.reply_text(
+        "🎫 MY CARDS\n\n"
+        "Your Bingo cards will appear here.\n\n"
+        "🎮 Tap Play Bingo to select a card and join a game."
+    )
+
+
+async def winners(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "🏆 WINNERS\n\n"
+        "No winners recorded yet.\n\n"
+        "Play Bingo to become a winner! 🎉"
+    )
+
+
+async def game_rules(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        "ℹ️ GAME RULES\n\n"
+        "🎯 Bingo type: 75 Ball\n"
+        "🎫 Card price: 10 ETB\n"
+        "👥 Minimum players: 2\n"
+        "🏆 Maximum winners: 1\n"
+        "💰 Prize pool: 80% of the game pool\n"
+        "🏦 Platform fee: 20%\n\n"
+        "Select a card, join the game, and complete a Bingo pattern to win."
+    )
+
 
 async def play(
     update: Update,
