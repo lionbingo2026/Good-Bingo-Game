@@ -194,6 +194,30 @@ def health():
 
 
 # ============================================================
+# CLIENT IP CHECK
+# ============================================================
+
+@app.route("/api/my-ip")
+def my_ip():
+
+    forwarded = request.headers.get(
+        "X-Forwarded-For",
+        ""
+    )
+
+    real_ip = request.headers.get(
+        "X-Real-IP",
+        ""
+    )
+
+    return jsonify({
+        "x_forwarded_for": forwarded,
+        "x_real_ip": real_ip,
+        "remote_addr": request.remote_addr
+    })
+
+
+# ============================================================
 # JOIN GAME
 # ============================================================
 
