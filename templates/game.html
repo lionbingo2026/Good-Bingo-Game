@@ -1,0 +1,834 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Good Bingo Game</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f4f7fb;
+            color: #172033;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: auto;
+            padding: 16px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 18px;
+            padding: 18px;
+            margin-bottom: 15px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.08);
+        }
+
+        h1,
+        h2 {
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+
+        .stat {
+            background: #eef2f7;
+            border-radius: 12px;
+            padding: 12px 5px;
+            text-align: center;
+        }
+
+        .stat strong {
+            display: block;
+            font-size: 20px;
+            margin-bottom: 4px;
+        }
+
+        .status {
+            text-align: center;
+            font-weight: bold;
+            margin: 18px 0;
+        }
+
+        .current {
+            text-align: center;
+            padding: 15px;
+        }
+
+        .current small {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        #currentNumber {
+            font-size: 48px;
+            font-weight: bold;
+        }
+
+        .card-picker {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 7px;
+        }
+
+        .card-picker button {
+            padding: 10px 3px;
+            border: none;
+            border-radius: 8px;
+            background: #eef2f7;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .card-picker button.selected {
+            background: #172033;
+            color: white;
+        }
+
+        .join-button {
+            width: 100%;
+            padding: 16px;
+            margin-top: 18px;
+            border: none;
+            border-radius: 12px;
+            background: #172033;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .voice-button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 12px;
+            background: #eef2f7;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .refresh-button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 12px;
+            background: #eef2f7;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .bingo-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: center;
+        }
+
+        .bingo-table th,
+        .bingo-table td {
+            border: 1px solid #d8dee8;
+            padding: 12px 5px;
+            font-weight: bold;
+        }
+
+        .called-numbers {
+            line-height: 2;
+            text-align: center;
+            word-break: break-word;
+        }
+
+        .back {
+            display: block;
+            text-align: center;
+            margin: 15px;
+            text-decoration: none;
+            color: #172033;
+        }
+
+        @media (max-width: 400px) {
+            .card-picker {
+                gap: 5px;
+            }
+
+            .card-picker button {
+                font-size: 12px;
+                padding: 9px 2px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<main class="container">
+
+    <!-- GOOD BINGO GAME -->
+    <section class="card">
+
+        <h1>🎱 Good Bingo Game</h1>
+
+        <p class="subtitle">
+            🎯 Play Bingo
+        </p>
+
+        <!-- GAME STATS -->
+        <div class="stats">
+
+            <div class="stat">
+                <strong id="players">0</strong>
+                Players
+            </div>
+
+            <div class="stat">
+                <strong id="cardsCount">0</strong>
+                Cards
+            </div>
+
+            <div class="stat">
+                <strong id="prizePool">0 ETB</strong>
+                Prize Pool
+            </div>
+
+        </div>
+
+        <!-- STATUS -->
+        <div class="status" id="status">
+            Waiting for players...
+        </div>
+
+        <!-- CURRENT NUMBER -->
+        <div class="current">
+
+            <small>CURRENT NUMBER</small>
+
+            <div id="currentNumber">
+                —
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- CARD SELECTOR -->
+    <section class="card">
+
+        <h2>🎫 Choose Your Bingo Card</h2>
+
+        <p class="subtitle">
+            Select one card from 1 to 300
+        </p>
+
+        <div
+            class="card-picker"
+            id="cardPicker">
+        </div>
+
+        <button
+            class="join-button"
+            id="joinButton">
+            🎮 Join Game
+        </button>
+
+    </section>
+
+
+    <!-- VOICE -->
+    <section class="card">
+
+        <h2>🔊 Bingo Voice</h2>
+
+        <p class="subtitle">
+            Enable voice before the game starts.
+        </p>
+
+        <button
+            class="voice-button"
+            id="voiceButton">
+            🔊 Enable Bingo Voice
+        </button>
+
+    </section>
+
+
+    <!-- PLAYER BINGO CARD -->
+    <section class="card">
+
+        <h2>YOUR BINGO CARD</h2>
+
+        <table class="bingo-table">
+
+            <thead>
+                <tr>
+                    <th>B</th>
+                    <th>I</th>
+                    <th>N</th>
+                    <th>G</th>
+                    <th>O</th>
+                </tr>
+            </thead>
+
+            <tbody id="bingoBody">
+
+                <tr>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                </tr>
+
+                <tr>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                </tr>
+
+                <tr>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>FREE</td>
+                    <td>—</td>
+                    <td>—</td>
+                </tr>
+
+                <tr>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                </tr>
+
+                <tr>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                </tr>
+
+            </tbody>
+
+        </table>
+
+    </section>
+
+
+    <!-- CALLED NUMBERS -->
+    <section class="card">
+
+        <h2>🔢 Called Numbers</h2>
+
+        <div
+            class="called-numbers"
+            id="calledNumbers">
+            No numbers called yet.
+        </div>
+
+    </section>
+
+
+    <!-- REFRESH -->
+    <button
+        class="refresh-button"
+        id="refreshButton">
+        🔄 Refresh Game
+    </button>
+
+
+    <!-- BACK TO MENU -->
+    <a
+        class="back"
+        href="/menu">
+        ← Back to Good Bingo Menu
+    </a>
+
+</main>
+
+
+<script>
+
+    /*
+     * SELECTED CARD
+     */
+
+    let selectedCard = null;
+
+
+    /*
+     * LAST NUMBER
+     *
+     * Used to prevent the same number
+     * from being spoken repeatedly.
+     */
+
+    let lastCalledNumber = null;
+
+
+    /*
+     * VOICE ENABLED
+     */
+
+    let voiceEnabled = false;
+
+
+    /*
+     * GET BINGO LETTER
+     */
+
+    function getBingoLetter(number) {
+
+        if (number >= 1 && number <= 15) {
+            return "B";
+        }
+
+        if (number >= 16 && number <= 30) {
+            return "I";
+        }
+
+        if (number >= 31 && number <= 45) {
+            return "N";
+        }
+
+        if (number >= 46 && number <= 60) {
+            return "G";
+        }
+
+        if (number >= 61 && number <= 75) {
+            return "O";
+        }
+
+        return "";
+    }
+
+
+    /*
+     * SPEAK NUMBER
+     *
+     * Example:
+     *
+     * 7  -> B 7
+     * 22 -> I 22
+     * 38 -> N 38
+     * 52 -> G 52
+     * 70 -> O 70
+     */
+
+    function speakCalledNumber(number) {
+
+        if (!number) {
+            return;
+        }
+
+        if (!window.speechSynthesis) {
+            return;
+        }
+
+        if (!voiceEnabled) {
+            return;
+        }
+
+        const letter = getBingoLetter(number);
+
+        const text =
+            letter + " " + number;
+
+        window.speechSynthesis.cancel();
+
+        const speech =
+            new SpeechSynthesisUtterance(text);
+
+        speech.lang = "en-US";
+
+        speech.rate = 0.85;
+
+        speech.pitch = 1.0;
+
+        speech.volume = 1.0;
+
+        window.speechSynthesis.speak(speech);
+    }
+
+
+    /*
+     * ENABLE VOICE
+     *
+     * Telegram/mobile browsers may require
+     * a user tap before speech can start.
+     */
+
+    document
+        .getElementById("voiceButton")
+        .addEventListener("click", function () {
+
+            voiceEnabled = true;
+
+            const speech =
+                new SpeechSynthesisUtterance(
+                    "Bingo voice enabled"
+                );
+
+            speech.lang = "en-US";
+
+            speech.rate = 0.85;
+
+            speech.volume = 1.0;
+
+            window.speechSynthesis.cancel();
+
+            window.speechSynthesis.speak(speech);
+
+            this.textContent =
+                "🔊 Bingo Voice Enabled";
+
+        });
+
+
+    /*
+     * CREATE CARD BUTTONS 001–300
+     */
+
+    const cardPicker =
+        document.getElementById("cardPicker");
+
+
+    for (
+        let i = 1;
+        i <= 300;
+        i++
+    ) {
+
+        const button =
+            document.createElement("button");
+
+        button.textContent =
+            String(i).padStart(3, "0");
+
+
+        button.addEventListener(
+            "click",
+            function () {
+
+                document
+                    .querySelectorAll(
+                        "#cardPicker button"
+                    )
+                    .forEach(function (btn) {
+
+                        btn.classList.remove(
+                            "selected"
+                        );
+
+                    });
+
+
+                button.classList.add(
+                    "selected"
+                );
+
+
+                selectedCard = i;
+
+            }
+        );
+
+
+        cardPicker.appendChild(button);
+    }
+
+
+    /*
+     * UPDATE GAME
+     */
+
+    async function refreshGame() {
+
+        try {
+
+            const response =
+                await fetch("/api/game");
+
+
+            if (!response.ok) {
+
+                throw new Error(
+                    "API request failed"
+                );
+
+            }
+
+
+            const data =
+                await response.json();
+
+
+            /*
+             * PLAYERS
+             */
+
+            document
+                .getElementById("players")
+                .textContent =
+                data.players ?? 0;
+
+
+            /*
+             * CARDS
+             */
+
+            document
+                .getElementById("cardsCount")
+                .textContent =
+                data.cards ?? 0;
+
+
+            /*
+             * PRIZE POOL
+             */
+
+            document
+                .getElementById("prizePool")
+                .textContent =
+                (data.prize_pool ?? 0)
+                + " ETB";
+
+
+            /*
+             * STATUS
+             */
+
+            document
+                .getElementById("status")
+                .textContent =
+                data.status ||
+                "Waiting for players...";
+
+
+            /*
+             * CURRENT NUMBER
+             */
+
+            const currentNumber =
+                data.current_number;
+
+
+            document
+                .getElementById("currentNumber")
+                .textContent =
+                currentNumber ?? "—";
+
+
+            /*
+             * SPEAK ONLY NEW NUMBER
+             */
+
+            if (
+                currentNumber &&
+                currentNumber !== lastCalledNumber
+            ) {
+
+                lastCalledNumber =
+                    currentNumber;
+
+                speakCalledNumber(
+                    currentNumber
+                );
+
+            }
+
+
+            /*
+             * CALLED NUMBERS
+             */
+
+            const numbers =
+                data.called_numbers || [];
+
+
+            const calledElement =
+                document.getElementById(
+                    "calledNumbers"
+                );
+
+
+            if (numbers.length === 0) {
+
+                calledElement.textContent =
+                    "No numbers called yet.";
+
+            } else {
+
+                calledElement.textContent =
+                    numbers
+                        .map(function(number) {
+
+                            return (
+                                getBingoLetter(number)
+                                + "-"
+                                + number
+                            );
+
+                        })
+                        .join(" • ");
+
+            }
+
+
+        } catch (error) {
+
+            console.error(
+                "Game refresh error:",
+                error
+            );
+
+            document
+                .getElementById("status")
+                .textContent =
+                "Unable to load game.";
+
+        }
+
+    }
+
+
+    /*
+     * JOIN GAME
+     */
+
+    document
+        .getElementById("joinButton")
+        .addEventListener(
+            "click",
+            async function () {
+
+                if (!selectedCard) {
+
+                    alert(
+                        "Please select a Bingo card first."
+                    );
+
+                    return;
+                }
+
+
+                try {
+
+                    const response =
+                        await fetch(
+                            "/api/join",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body:
+                                    JSON.stringify({
+                                        card_number:
+                                            selectedCard
+                                    })
+                            }
+                        );
+
+
+                    const data =
+                        await response.json();
+
+
+                    if (
+                        !response.ok ||
+                        data.success === false
+                    ) {
+
+                        alert(
+                            data.message ||
+                            data.error ||
+                            "Unable to join game."
+                        );
+
+                        return;
+                    }
+
+
+                    alert(
+                        data.message ||
+                        "You joined the game!"
+                    );
+
+
+                    await refreshGame();
+
+                } catch (error) {
+
+                    console.error(
+                        "Join error:",
+                        error
+                    );
+
+                    alert(
+                        "Connection error. Please try again."
+                    );
+
+                }
+
+            }
+        );
+
+
+    /*
+     * REFRESH BUTTON
+     */
+
+    document
+        .getElementById("refreshButton")
+        .addEventListener(
+            "click",
+            refreshGame
+        );
+
+
+    /*
+     * AUTOMATIC REFRESH
+     *
+     * Checks Render every 5 seconds.
+     */
+
+    setInterval(
+        refreshGame,
+        5000
+    );
+
+
+    /*
+     * INITIAL GAME LOAD
+     */
+
+    refreshGame();
+
+</script>
+
+</body>
+</html>
