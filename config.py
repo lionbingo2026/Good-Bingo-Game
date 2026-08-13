@@ -95,7 +95,7 @@ PORT = int(
 
 WEBHOOK_URL = os.getenv(
     "WEBHOOK_URL",
-    "https://good-bingo-game-9yeq.onrender.com/webhook"
+    "https://good-bingo-game-r0pe.onrender.com/webhook"
 )
 
 
@@ -105,7 +105,7 @@ WEBHOOK_URL = os.getenv(
 
 MINI_APP_URL = os.getenv(
     "MINI_APP_URL",
-    "https://good-bingo-game-9yeq.onrender.com/"
+    "https://good-bingo-game-r0pe.onrender.com/"
 )
 
 

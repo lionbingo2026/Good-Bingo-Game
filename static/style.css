@@ -420,3 +420,44 @@ button:disabled {
         height: 34px;
     }
 }
+
+/* ================================
+   GOOD BINGO MAIN MENU
+================================ */
+
+.menu-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+    margin-top: 15px;
+}
+
+.menu-grid button {
+    width: 100%;
+    padding: 13px 8px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.menu-content {
+    margin-top: 15px;
+    padding: 15px;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.menu-content button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+}
+
+@media (max-width: 420px) {
+    .menu-grid {
+        grid-template-columns: 1fr;
+    }
+}
+

@@ -897,3 +897,121 @@ document.addEventListener(
 "DOMContentLoaded",
 startApp
 );
+
+/* ================================
+   GOOD BINGO MAIN MENU
+================================ */
+
+function showMenuSection(section) {
+    const content = document.getElementById("menuContent");
+    if (!content) return;
+
+    const sections = {
+        start: `
+            <h3>🏠 Start</h3>
+            <p>Welcome to Good Bingo Game!</p>
+            <button type="button" onclick="scrollToGame()">
+                🎯 Play Bingo
+            </button>
+        `,
+
+        profile: `
+            <h3>👤 Registration / Profile</h3>
+            <p>Telegram profile</p>
+            <p id="profileName">Loading...</p>
+        `,
+
+        phone: `
+            <h3>📱 Phone Number</h3>
+            <p>Your phone number can be managed through Telegram.</p>
+        `,
+
+        wallet: `
+            <h3>💰 Wallet / Balance</h3>
+            <p id="walletBalance">Balance: Loading...</p>
+        `,
+
+        deposit: `
+            <h3>➕ Deposit</h3>
+            <p>Deposit funds to your Bingo wallet.</p>
+        `,
+
+        withdraw: `
+            <h3>💸 Withdrawal</h3>
+            <p>Request a withdrawal from your wallet.</p>
+        `,
+
+        cards: `
+            <h3>🎫 My Cards</h3>
+            <p>Your selected Bingo cards appear in the game area.</p>
+            <button type="button" onclick="scrollToCards()">
+                🎫 View Cards
+            </button>
+        `,
+
+        play: `
+            <h3>🎯 Play Bingo</h3>
+            <p>Select your Bingo card and join the live game.</p>
+            <button type="button" onclick="scrollToGame()">
+                🎮 Join Game
+            </button>
+        `,
+
+        winners: `
+            <h3>🏆 Winners</h3>
+            <p>Winner information will appear here.</p>
+        `,
+
+        transactions: `
+            <h3>📜 Transactions</h3>
+            <p>Your deposit and withdrawal history will appear here.</p>
+        `,
+
+        help: `
+            <h3>ℹ️ Help</h3>
+            <p>Choose a Bingo card, join the game, watch the called numbers, and claim Bingo when you win.</p>
+        `
+    };
+
+    content.innerHTML = sections[section] || sections.start;
+
+    if (section === "profile") {
+        const user = getTelegramUser();
+
+        const name = user
+            ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
+            : "Telegram user not available";
+
+        const profileName =
+            document.getElementById("profileName");
+
+        if (profileName) {
+            profileName.textContent = `Name: ${name}`;
+        }
+    }
+}
+
+function scrollToGame() {
+    const game = document.querySelector(".game-card");
+
+    if (game) {
+        game.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    }
+}
+
+function scrollToCards() {
+    const picker = document.getElementById("cardPicker");
+
+    if (picker) {
+        picker.scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+    } else {
+        scrollToGame();
+    }
+}
+
