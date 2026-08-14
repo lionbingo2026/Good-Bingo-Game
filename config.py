@@ -22,11 +22,11 @@ if not BOT_TOKEN:
 
 GAME_NAME = "Good Bingo Game"
 
-CARD_PRICE = 10
+CARD_PRICE = 5
 
 MAX_PLAYERS = 300
 
-MAX_CARDS_PER_USER = 3
+MAX_CARDS_PER_USER = 2
 
 
 # ==========================================
@@ -61,7 +61,7 @@ PLATFORM_FEE = 20
 # Wallet Settings
 # ==========================================
 
-START_BALANCE = 0
+START_BALANCE = 20
 
 REGISTRATION_BONUS = 20
 
