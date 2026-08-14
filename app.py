@@ -164,7 +164,7 @@ def home():
 
 @app.route("/menu")
 def menu():
-    return render_template("menu.html")
+    return render_template("index.html")
 
 
 # ============================================================
