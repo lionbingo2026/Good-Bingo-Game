@@ -1,13 +1,14 @@
 from database import (
     get_user,
     update_balance,
-    payout_winner
+    add_transaction,
+    payout_winner,
 )
 
 from config import (
     MIN_DEPOSIT,
     MIN_WITHDRAW,
-    MIN_REMAINING_BALANCE
+    MIN_REMAINING_BALANCE,
 )
 
 
@@ -21,16 +22,43 @@ def get_balance(telegram_id):
 
 
 def deposit(telegram_id, amount):
+    """
+    Add an approved deposit to the wallet.
+
+    Returns:
+        True  = deposit completed
+        False = invalid amount or user does not exist
+    """
 
     if amount < MIN_DEPOSIT:
         return False
 
-    update_balance(telegram_id, amount)
+    if get_user(telegram_id) is None:
+        return False
+
+    update_balance(
+        telegram_id,
+        amount,
+    )
+
+    add_transaction(
+        telegram_id,
+        amount,
+        "deposit",
+        "completed",
+    )
 
     return True
 
 
 def withdraw(telegram_id, amount):
+    """
+    Withdraw money from the wallet.
+
+    Returns:
+        True  = withdrawal completed
+        False = validation failed
+    """
 
     if amount < MIN_WITHDRAW:
         return False
@@ -43,7 +71,17 @@ def withdraw(telegram_id, amount):
     if balance - amount < MIN_REMAINING_BALANCE:
         return False
 
-    update_balance(telegram_id, -amount)
+    update_balance(
+        telegram_id,
+        -amount,
+    )
+
+    add_transaction(
+        telegram_id,
+        amount,
+        "withdrawal",
+        "completed",
+    )
 
     return True
 
@@ -51,7 +89,7 @@ def withdraw(telegram_id, amount):
 def add_bingo_winnings(
     telegram_id,
     amount,
-    game_id
+    game_id,
 ):
     """
     Add Bingo winnings to the player's wallet.
@@ -63,5 +101,5 @@ def add_bingo_winnings(
     return payout_winner(
         telegram_id,
         amount,
-        game_id
+        game_id,
     )

@@ -19,8 +19,19 @@ from telegram.ext import (
     filters,
 )
 
-from config import GAME_NAME, MINI_APP_URL
-from database import create_user, get_user
+from config import (
+    GAME_NAME,
+    MINI_APP_URL,
+    REGISTRATION_BONUS,
+    MIN_DEPOSIT,
+    MIN_WITHDRAW,
+    MIN_REMAINING_BALANCE,
+    CURRENCY,
+)
+from database import (
+    create_user,
+    get_user,
+)
 from cartela import format_card
 from shared import game
 
@@ -213,8 +224,8 @@ async def registration_phone(
             "✅ Registration complete!\n\n"
             f"🎉 Welcome to {GAME_NAME}!\n\n"
             "Your account is ready.\n\n"
-            "🎁 Registration Bonus: +20 ETB\n"
-            "💰 Your balance: 20 ETB\n\n"
+            f"🎁 Registration Bonus: +{REGISTRATION_BONUS} {CURRENCY}\n"
+            f"💰 Your balance: {REGISTRATION_BONUS} {CURRENCY}\n\n"
             "Choose an option below to continue.",
             reply_markup=main_menu_keyboard(),
         )
