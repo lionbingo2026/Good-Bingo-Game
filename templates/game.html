@@ -367,6 +367,8 @@
 </main>
 
 
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
 <script>
 
     /*
@@ -747,6 +749,15 @@
 
                                 body:
                                     JSON.stringify({
+                                        telegram_id:
+                                            window.Telegram?.WebApp?.initDataUnsafe?.user?.id,
+
+                                        username:
+                                            window.Telegram?.WebApp?.initDataUnsafe?.user?.username || "",
+
+                                        first_name:
+                                            window.Telegram?.WebApp?.initDataUnsafe?.user?.first_name || "Player",
+
                                         card_number:
                                             selectedCard
                                     })
