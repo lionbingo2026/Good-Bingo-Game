@@ -33,3 +33,4 @@ bingo.db
 node_modules/
 *.backup
 *.before_*
+*.backup-*
