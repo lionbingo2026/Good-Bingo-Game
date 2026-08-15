@@ -94,35 +94,58 @@ def create_user(
     conn = get_connection()
     cur = conn.cursor()
 
-    cur.execute(
-        "SELECT telegram_id FROM users WHERE telegram_id=?",
-        (telegram_id,)
-    )
+    try:
+        cur.execute(
+            "SELECT telegram_id FROM users WHERE telegram_id=?",
+            (telegram_id,)
+        )
 
-    if cur.fetchone():
+        if cur.fetchone():
+            return False
+
+        cur.execute("""
+        INSERT INTO users (
+            telegram_id,
+            username,
+            full_name,
+            phone_number,
+            balance
+        )
+        VALUES (?, ?, ?, ?, ?)
+        """, (
+            telegram_id,
+            username,
+            full_name,
+            phone_number,
+            REGISTRATION_BONUS
+        ))
+
+        cur.execute("""
+        INSERT INTO transactions (
+            telegram_id,
+            amount,
+            type,
+            status,
+            game_id
+        )
+        VALUES (?, ?, ?, ?, ?)
+        """, (
+            telegram_id,
+            REGISTRATION_BONUS,
+            "registration_bonus",
+            "completed",
+            None
+        ))
+
+        conn.commit()
+        return True
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
         conn.close()
-        return False
-
-    cur.execute("""
-    INSERT INTO users (
-        telegram_id,
-        username,
-        full_name,
-        phone_number,
-        balance
-    )
-    VALUES (?, ?, ?, ?, ?)
-    """, (
-        telegram_id,
-        username,
-        full_name,
-        phone_number,
-        REGISTRATION_BONUS
-    ))
-
-    conn.commit()
-    conn.close()
-    return True
 
 
 def get_user(telegram_id):
