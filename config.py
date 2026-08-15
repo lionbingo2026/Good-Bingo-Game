@@ -105,7 +105,7 @@ WEBHOOK_URL = os.getenv(
 
 MINI_APP_URL = os.getenv(
     "MINI_APP_URL",
-    "https://good-bingo-game-r0pe.onrender.com/"
+    "https://good-bingo-game-r0pe.onrender.com/game"
 )
 
 
