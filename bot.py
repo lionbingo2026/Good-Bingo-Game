@@ -60,11 +60,12 @@ def main_menu_keyboard():
 
     return ReplyKeyboardMarkup(
         [
-            ["🎮 Play Bingo", "🎫 My Cards"],
-            ["💰 Wallet", "➕ Deposit"],
-            ["💸 Withdrawal", "📋 Transactions"],
-            ["👤 My Account", "🏆 Winners"],
-            ["ℹ️ Game Rules", "❓ Help"],
+            ["🏠 Start", "👤 Registration / Profile"],
+            ["📱 Phone Number", "💰 Wallet / Balance"],
+            ["➕ Deposit", "💸 Withdrawal"],
+            ["🎫 My Cards", "🎯 Play Bingo"],
+            ["🏆 Winners", "📜 Transactions"],
+            ["ℹ️ Help"],
         ],
         resize_keyboard=True,
     )
@@ -920,7 +921,14 @@ def setup_handlers(
 
     application.add_handler(
         MessageHandler(
-            filters.Regex("^🎮 Play Bingo$"),
+            filters.Regex("^🏠 Start$"),
+            start,
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^🎯 Play Bingo$"),
             play,
         )
     )
@@ -934,7 +942,7 @@ def setup_handlers(
 
     application.add_handler(
         MessageHandler(
-            filters.Regex("^💰 Wallet$"),
+            filters.Regex("^💰 Wallet / Balance$"),
             menu_wallet,
         )
     )
@@ -955,14 +963,14 @@ def setup_handlers(
 
     application.add_handler(
         MessageHandler(
-            filters.Regex("^📋 Transactions$"),
+            filters.Regex("^📜 Transactions$"),
             menu_transactions,
         )
     )
 
     application.add_handler(
         MessageHandler(
-            filters.Regex("^👤 My Account$"),
+            filters.Regex("^👤 Registration / Profile$"),
             menu_account,
         )
     )
@@ -976,14 +984,7 @@ def setup_handlers(
 
     application.add_handler(
         MessageHandler(
-            filters.Regex("^ℹ️ Game Rules$"),
-            game_rules,
-        )
-    )
-
-    application.add_handler(
-        MessageHandler(
-            filters.Regex("^❓ Help$"),
+            filters.Regex("^ℹ️ Help$"),
             menu_help,
         )
     )
