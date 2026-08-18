@@ -203,6 +203,128 @@ def add_transaction(
     conn.close()
 
 
+
+def get_pending_transactions(tx_type):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT
+        id,
+        telegram_id,
+        amount,
+        type,
+        status,
+        game_id
+    FROM transactions
+    WHERE type=?
+      AND status='pending'
+    ORDER BY id ASC
+    """, (tx_type,))
+
+    rows = cur.fetchall()
+    conn.close()
+
+    return rows
+
+
+
+
+def approve_transaction(transaction_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+        SELECT telegram_id, amount, type, status
+        FROM transactions
+        WHERE id=?
+        """, (transaction_id,))
+
+        row = cur.fetchone()
+
+        if row is None or row["status"] != "pending":
+            conn.rollback()
+            return False
+
+        if row["type"] == "deposit":
+            cur.execute("""
+            UPDATE users
+            SET balance = balance + ?
+            WHERE telegram_id=?
+            """, (row["amount"], row["telegram_id"]))
+
+        elif row["type"] == "withdrawal":
+            cur.execute("""
+            UPDATE users
+            SET balance = balance - ?
+            WHERE telegram_id=?
+            AND balance - ? >= ?
+            """, (
+                row["amount"],
+                row["telegram_id"],
+                row["amount"],
+                0,
+            ))
+
+            if cur.rowcount != 1:
+                conn.rollback()
+                return False
+
+        else:
+            conn.rollback()
+            return False
+
+        cur.execute("""
+        UPDATE transactions
+        SET status='completed'
+        WHERE id=?
+        AND status='pending'
+        """, (transaction_id,))
+
+        if cur.rowcount != 1:
+            conn.rollback()
+            return False
+
+        conn.commit()
+        return True
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
+
+def reject_transaction(transaction_id):
+    conn = get_connection()
+    cur = conn.cursor()
+
+    try:
+        cur.execute("""
+        UPDATE transactions
+        SET status='rejected'
+        WHERE id=?
+        AND status='pending'
+        """, (transaction_id,))
+
+        if cur.rowcount != 1:
+            conn.rollback()
+            return False
+
+        conn.commit()
+        return True
+
+    except Exception:
+        conn.rollback()
+        raise
+
+    finally:
+        conn.close()
+
+
+
 def get_balance(telegram_id):
     user = get_user(telegram_id)
 
