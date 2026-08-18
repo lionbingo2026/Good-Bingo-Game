@@ -7,6 +7,8 @@ from telegram import (
     Update,
     ReplyKeyboardMarkup,
     KeyboardButton,
+    InlineKeyboardButton,
+    InlineKeyboardMarkup,
     MenuButtonWebApp,
     WebAppInfo,
 )
@@ -16,6 +18,7 @@ from telegram.ext import (
     ContextTypes,
     ConversationHandler,
     MessageHandler,
+    CallbackQueryHandler,
     filters,
 )
 
@@ -27,10 +30,14 @@ from config import (
     MIN_WITHDRAW,
     MIN_REMAINING_BALANCE,
     CURRENCY,
+    ADMIN_ID,
 )
 from database import (
     create_user,
     get_user,
+    get_pending_transactions,
+    approve_transaction,
+    reject_transaction,
 )
 from cartela import format_card
 from shared import game
@@ -640,6 +647,103 @@ async def menu_wallet(
 
 
 # ============================================================
+# PHONE NUMBER MENU
+# ============================================================
+
+async def phone_number_menu(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+
+    user = update.effective_user
+
+    if not get_user(user.id):
+
+        await update.message.reply_text(
+            "Please use /start first."
+        )
+
+        return
+
+    keyboard = ReplyKeyboardMarkup(
+        [
+            [
+                KeyboardButton(
+                    "📱 Share Phone Number",
+                    request_contact=True,
+                )
+            ],
+            [
+                KeyboardButton("🔙 Main Menu")
+            ],
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )
+
+    await update.message.reply_text(
+        "📱 Phone Number\n\n"
+        "Please use the button below to share "
+        "your phone number.",
+        reply_markup=keyboard,
+    )
+
+
+async def update_phone_number(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+
+    contact = update.message.contact
+
+    if not contact:
+        return
+
+    if (
+        contact.user_id
+        and contact.user_id != update.effective_user.id
+    ):
+        await update.message.reply_text(
+            "❌ Please share your own phone number."
+        )
+        return
+
+    user = update.effective_user
+    phone_number = contact.phone_number
+
+    try:
+        conn = sqlite3.connect("bingo.db")
+
+        conn.execute(
+            """
+            UPDATE users
+            SET phone_number=?
+            WHERE telegram_id=?
+            """,
+            (phone_number, user.id),
+        )
+
+        conn.commit()
+        conn.close()
+
+        await update.message.reply_text(
+            "✅ Phone number updated successfully!\n\n"
+            f"📱 Phone: {phone_number}",
+            reply_markup=main_menu_keyboard(),
+        )
+
+    except Exception as e:
+
+        logging.exception(
+            f"Phone update error: {e}"
+        )
+
+        await update.message.reply_text(
+            "❌ Could not update phone number."
+        )
+
+
+# ============================================================
 # ACCOUNT
 # ============================================================
 
@@ -812,6 +916,184 @@ async def menu_withdrawal(
 
 
 # ============================================================
+# ADMIN MENU
+# ============================================================
+
+def admin_menu_keyboard():
+    return ReplyKeyboardMarkup(
+        [
+            ["💰 Pending Deposits", "💸 Pending Withdrawals"],
+            ["🔙 Main Menu"],
+        ],
+        resize_keyboard=True,
+    )
+
+
+async def admin_menu(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    user_id = update.effective_user.id
+
+    if user_id != ADMIN_ID:
+        await update.message.reply_text(
+            "⛔ Admin access denied."
+        )
+        return
+
+    await update.message.reply_text(
+        "👑 Good Bingo Game Admin Panel\n\n"
+        "Choose an admin action:",
+        reply_markup=admin_menu_keyboard(),
+    )
+
+
+async def admin_main_menu(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    await update.message.reply_text(
+        "🏠 Main menu",
+        reply_markup=main_menu_keyboard(),
+    )
+
+
+async def admin_pending_deposits(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("⛔ Admin access denied.")
+        return
+
+    rows = get_pending_transactions("deposit")
+
+    if not rows:
+        await update.message.reply_text(
+            "💰 Pending Deposits\n\n"
+            "No pending deposits."
+        )
+        return
+
+    for row in rows:
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "✅ Approve",
+                    callback_data=f"admin:approve:{row['id']}"
+                ),
+                InlineKeyboardButton(
+                    "❌ Reject",
+                    callback_data=f"admin:reject:{row['id']}"
+                ),
+            ]
+        ])
+
+        await update.message.reply_text(
+            f"💰 Pending Deposit\n\n"
+            f"Transaction ID: {row['id']}\n"
+            f"User ID: {row['telegram_id']}\n"
+            f"Amount: {row['amount']} ETB\n"
+            f"Status: {row['status']}",
+            reply_markup=keyboard,
+        )
+
+
+async def admin_pending_withdrawals(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    if update.effective_user.id != ADMIN_ID:
+        await update.message.reply_text("⛔ Admin access denied.")
+        return
+
+    rows = get_pending_transactions("withdrawal")
+
+    if not rows:
+        await update.message.reply_text(
+            "💸 Pending Withdrawals\n\n"
+            "No pending withdrawals."
+        )
+        return
+
+    for row in rows:
+        keyboard = InlineKeyboardMarkup([
+            [
+                InlineKeyboardButton(
+                    "✅ Approve",
+                    callback_data=f"admin:approve:{row['id']}"
+                ),
+                InlineKeyboardButton(
+                    "❌ Reject",
+                    callback_data=f"admin:reject:{row['id']}"
+                ),
+            ]
+        ])
+
+        await update.message.reply_text(
+            f"💸 Pending Withdrawal\n\n"
+            f"Transaction ID: {row['id']}\n"
+            f"User ID: {row['telegram_id']}\n"
+            f"Amount: {row['amount']} ETB\n"
+            f"Status: {row['status']}",
+            reply_markup=keyboard,
+        )
+
+
+async def admin_transaction_action(
+    update: Update,
+    context: ContextTypes.DEFAULT_TYPE,
+):
+    query = update.callback_query
+
+    await query.answer()
+
+    if query.from_user.id != ADMIN_ID:
+        await query.edit_message_text(
+            "⛔ Admin access denied."
+        )
+        return
+
+    parts = query.data.split(":", 2)
+
+    if len(parts) != 3:
+        await query.edit_message_text(
+            "❌ Invalid admin action."
+        )
+        return
+
+    action = parts[1]
+
+    try:
+        transaction_id = int(parts[2])
+    except ValueError:
+        await query.edit_message_text(
+            "❌ Invalid transaction ID."
+        )
+        return
+
+    if action == "approve":
+        success = approve_transaction(transaction_id)
+        result = "✅ Transaction approved." if success else (
+            "⚠️ Transaction was already processed "
+            "or could not be approved."
+        )
+
+    elif action == "reject":
+        success = reject_transaction(transaction_id)
+        result = "❌ Transaction rejected." if success else (
+            "⚠️ Transaction was already processed "
+            "or could not be rejected."
+        )
+
+    else:
+        result = "❌ Unknown admin action."
+
+    await query.edit_message_text(result)
+
+
+
+# ============================================================
 # ERROR HANDLER
 # ============================================================
 
@@ -926,6 +1208,21 @@ def setup_handlers(
         )
     )
 
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^📱 Phone Number$"),
+            phone_number_menu,
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.CONTACT,
+            update_phone_number,
+        )
+    )
+
     application.add_handler(
         MessageHandler(
             filters.Regex("^🎯 Play Bingo$"),
@@ -990,6 +1287,39 @@ def setup_handlers(
     )
 
     # ========================================================
+    # ADMIN MENU
+    # ========================================================
+
+    application.add_handler(
+        CommandHandler(
+            "admin",
+            admin_menu,
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^💰 Pending Deposits$"),
+            admin_pending_deposits,
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^💸 Pending Withdrawals$"),
+            admin_pending_withdrawals,
+        )
+    )
+
+    application.add_handler(
+        MessageHandler(
+            filters.Regex("^🔙 Main Menu$"),
+            admin_main_menu,
+        )
+    )
+
+
+    # ========================================================
     # COMMANDS
     # ========================================================
 
@@ -1020,6 +1350,14 @@ def setup_handlers(
             balance,
         )
     )
+
+    application.add_handler(
+        CallbackQueryHandler(
+            admin_transaction_action,
+            pattern=r"^admin:(approve|reject):[0-9]+$",
+        )
+    )
+
 
     # ========================================================
     # ERROR HANDLER
